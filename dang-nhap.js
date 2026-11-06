@@ -80,7 +80,7 @@
           (K.ten ? '<div class="mdn-khoa"><i aria-hidden="true"><svg viewBox="0 0 24 24"><path d="M8.5 5.8v12.4l9.8-6.2z"/></svg></i><span><span>Khoá đang mở</span><b>' + e(K.ten) + '</b><small>' + (soBuoi ? soBuoi + ' buổi' : '') + (soBai ? ' · ' + soBai + ' bài' : '') + ' · kiểm tra cuối mỗi buổi</small></span></div>' : '') +
           // 06/11 (user: "Đăng nhập để học tiếp — cta này không ổn. với người chưa học thì sao?" → "không cần câu hỏi đó. intro chung chung thôi.
           // nói ngọt ngào để người ta vào học kiểu 'học ngay'"): một lời mời chung cho mọi người, không chia người mới / người học dở.
-          '<h1 id="mdn-tieu">Học ngay thôi nào!</h1>' +
+          '<h1 id="mdn-tieu">Khám phá bài học ngay</h1>' +
           '<p>Mọi bài học đã sẵn sàng chờ bạn. Chỉ cần một chạm bằng tài khoản Google công ty <b>@' + e(MIEN) + '</b> — không cần nhớ thêm mật khẩu nào.</p>' +
           '<div id="mdn-nut" class="mdn-nut"></div>' +
           '<label class="mdn-nho"><input type="checkbox"' + (nhoDN() ? ' checked' : '') + '><span><b>Nhớ đăng nhập trên máy này</b><small>30 ngày không phải đăng nhập lại · bỏ tích nếu đang dùng máy chung</small></span></label>' +
