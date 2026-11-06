@@ -41,22 +41,56 @@
     if (!man) {
       man = document.createElement('div');
       man.className = 'man-dang-nhap';
-      var soBuoi = (APP.khoa && APP.khoa.buoi && APP.khoa.buoi.length) || 5;
-      var loi = function (so, tieu, chu) { return '<li><i aria-hidden="true">' + so + '</i><span><b>' + tieu + '</b>' + chu + '</span></li>'; };
+      // 06/11 tối (user: "câu người hướng dẫn theo dõi nghe phế… nên ghi slogan chung vì sau sẽ phát triển nhiều khoá… logo 2.5D chìm và motion"):
+      // nửa trái = THƯƠNG HIỆU NỀN TẢNG (dùng cho mọi khoá sau này) + lá Hecatech khắc chìm 2.5D có chuyển động; nửa phải = khoá đang mở + đăng nhập.
+      // Tiện ích liệt kê theo chuẩn nền tảng học trực tuyến (lộ trình, bài ngắn, đánh giá, đa thiết bị) — chỉ ghi điều web này CÓ THẬT.
+      var K = APP.khoa || {}, soBuoi = (K.buoi && K.buoi.length) || 0, soBai = (APP.ds && APP.ds.length) || 0;
+      var IC = {
+        lo: '<path d="M5 19c3 0 3-6 7-6s4 6 7 6" /><circle cx="5" cy="19" r="2"/><circle cx="19" cy="5" r="2"/><path d="M12 13V8a3 3 0 0 1 3-3h2"/>',
+        phat: '<rect x="3" y="5" width="18" height="14" rx="3"/><path d="M10.5 9.5v5l4-2.5z"/>',
+        cham: '<path d="M9 12.5l2 2 4-4.5"/><circle cx="12" cy="12" r="8.5"/>',
+        may: '<rect x="2.5" y="5" width="13" height="10" rx="1.6"/><path d="M6 19h6"/><rect x="17" y="8" width="4.5" height="11" rx="1.2"/>'
+      };
+      var loi = function (ic, tieu, chu) { return '<li><i aria-hidden="true"><svg viewBox="0 0 24 24">' + IC[ic] + '</svg></i><span><b>' + tieu + '</b>' + chu + '</span></li>'; };
       man.innerHTML = '<div class="mdn-khung" role="dialog" aria-modal="true" aria-labelledby="mdn-tieu">' +
-        '<section class="mdn-ben" aria-label="Giới thiệu khoá học">' +
-          '<svg class="mdn-logo" viewBox="0 0 363.18 81.52" aria-label="Hecatech"><use href="#hct-logo"/></svg>' +
-          '<span class="mdn-nhan">Khoá nền tảng · Video AI</span>' +
-          '<p class="mdn-slogan">Bạn cầm lái.<br><em>AI tăng tốc.</em></p>' +
-          '<p class="mdn-phu">Học cách làm video bán hàng cùng Agent — Agent làm phần lặp lại, bạn giữ phần quyết định: ý tưởng, duyệt kịch bản, chốt video.</p>' +
-          '<ul class="mdn-loi">' + loi('01', 'Nhanh hơn', 'Ghép cảnh, đọc giọng, chèn chữ để máy làm.') + loi('02', 'Chuẩn hơn', 'Kịch bản theo công thức của những video đã bán được.') + loi('03', 'Giỏi dần mỗi ngày', 'Mỗi video làm xong là một bài học cho video sau.') + '</ul>' +
-          '<p class="mdn-chan">' + soBuoi + ' buổi · học theo thứ tự · kiểm tra cuối mỗi buổi</p></section>' +
-        '<section class="mdn-the"><h1 id="mdn-tieu">Đăng nhập để vào học</h1>' +
-          '<p>Dùng email công ty <b>@' + e(MIEN) + '</b>. Tiến độ, câu trả lời và điểm được lưu theo tài khoản — học ở máy nào cũng xem tiếp được.</p>' +
+        '<section class="mdn-ben" aria-label="Nền tảng đào tạo Hecatech">' +
+          // lá Hecatech khắc chìm (bộ lọc bóng trong + viền sáng) — trôi nhẹ, nghiêng theo chuột, vệt sáng lướt qua
+          '<svg class="mdn-dau" viewBox="212 268 48 74" aria-hidden="true" focusable="false"><defs>' +
+            '<filter id="mdn-chim" x="-15%" y="-15%" width="130%" height="130%">' +
+              // lá đặc chỉ làm khuôn (SourceAlpha); màu chìm + bóng trong tự tô — 06/11: tô màu nửa trong suốt làm bóng trong tính sai, lá sáng như kính
+              '<feFlood flood-color="#021a0f" flood-opacity=".36"/><feComposite in2="SourceAlpha" operator="in" result="nen"/>' +
+              '<feFlood flood-color="#010d07" flood-opacity=".85"/><feComposite in2="SourceAlpha" operator="out"/><feOffset dx=".7" dy=".95"/><feGaussianBlur stdDeviation=".6"/><feComposite in2="SourceAlpha" operator="in" result="toi"/>' +
+              '<feFlood flood-color="#d8ffe9" flood-opacity=".3"/><feComposite in2="SourceAlpha" operator="out"/><feOffset dx="-.4" dy="-.5"/><feGaussianBlur stdDeviation=".35"/><feComposite in2="SourceAlpha" operator="in" result="sang"/>' +
+              '<feMerge><feMergeNode in="nen"/><feMergeNode in="toi"/><feMergeNode in="sang"/></feMerge></filter>' +
+            '<filter id="mdn-vien" x="-15%" y="-15%" width="130%" height="130%"><feMorphology in="SourceAlpha" operator="dilate" radius=".28" result="to"/><feComposite in="to" in2="SourceAlpha" operator="out" result="vien"/><feOffset in="vien" dx=".3" dy=".4" result="v2"/><feFlood flood-color="#bfefd3" flood-opacity=".2"/><feComposite in2="v2" operator="in"/></filter>' +
+            '<linearGradient id="mdn-vet" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity="0"/><stop offset=".5" stop-color="#eafff3" stop-opacity=".22"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>' +
+            '<clipPath id="mdn-cat"><use href="#hct-la-path"/></clipPath></defs>' +
+            '<use href="#hct-la-path" class="mdn-dau-vien" filter="url(#mdn-vien)"/>' +
+            '<use href="#hct-la-path" class="mdn-dau-nen" filter="url(#mdn-chim)"/>' +
+            '<g clip-path="url(#mdn-cat)"><rect class="mdn-dau-vet" x="190" y="262" width="14" height="86" fill="url(#mdn-vet)" transform="skewX(-18)"><animate attributeName="x" values="170;300" dur="7s" begin="1.4s" repeatCount="indefinite"/></rect></g>' +
+          '</svg>' +
+          '<div class="mdn-noi">' +
+            '<svg class="mdn-logo" viewBox="0 0 363.18 81.52" aria-label="Hecatech"><use href="#hct-logo"/></svg>' +
+            '<span class="mdn-nhan">Nền tảng đào tạo Hecatech</span>' +
+            '<p class="mdn-slogan"><span>Học để làm được.</span><em>Không chỉ để biết.</em></p>' +
+            '<p class="mdn-phu">Kỹ năng dùng được ngay trong việc hằng ngày — học từng bước ngắn, làm bài thật, thấy rõ mình tiến tới đâu.</p>' +
+            '<ul class="mdn-loi">' + loi('lo', 'Lộ trình rõ ràng', 'Học theo thứ tự, mỗi bài mở khi bạn sẵn sàng.') + loi('phat', 'Bài học ngắn, có phụ đề', 'Xem lại bao nhiêu lần cũng được.') +
+              loi('cham', 'Làm bài, biết kết quả ngay', 'Kiểm tra cuối buổi, chấm tự động khi nộp.') + loi('may', 'Học trên mọi thiết bị', 'Tiến độ đi theo tài khoản của bạn.') + '</ul>' +
+          '</div></section>' +
+        '<section class="mdn-the">' +
+          (K.ten ? '<div class="mdn-khoa"><span>Khoá đang mở</span><b>' + e(K.ten) + '</b><small>' + (soBuoi ? soBuoi + ' buổi' : '') + (soBai ? ' · ' + soBai + ' bài' : '') + ' · kiểm tra cuối mỗi buổi</small></div>' : '') +
+          '<h1 id="mdn-tieu">Đăng nhập để học tiếp</h1>' +
+          '<p>Dùng tài khoản Google công ty <b>@' + e(MIEN) + '</b> — một chạm, không cần mật khẩu riêng. Học tiếp đúng chỗ đã dừng, ở bất kỳ máy nào.</p>' +
           '<div id="mdn-nut" class="mdn-nut"></div>' +
           '<label class="mdn-nho"><input type="checkbox"' + (nhoDN() ? ' checked' : '') + '><span><b>Nhớ đăng nhập trên máy này</b><small>30 ngày không phải đăng nhập lại · bỏ tích nếu đang dùng máy chung</small></span></label>' +
           '<p class="mdn-bao" role="alert" aria-live="polite"></p>' +
-          '<p class="mdn-rieng">Người hướng dẫn theo dõi được tiến độ học của bạn để hỗ trợ kịp thời.</p></section></div>';
+          '<p class="mdn-rieng"><svg viewBox="0 0 24 24" aria-hidden="true"><rect x="5" y="10.5" width="14" height="10" rx="2.2"/><path d="M8 10.5V8a4 4 0 0 1 8 0v2.5"/></svg>Đăng nhập an toàn qua Google — web không nhận và không lưu mật khẩu của bạn.</p></section></div>';
+      // lá nghiêng theo chuột (2.5D) — tắt khi máy đặt "giảm chuyển động"
+      var ben = man.querySelector('.mdn-ben'), giam = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+      if (!giam) {
+        ben.addEventListener('pointermove', function (ev) { var r = ben.getBoundingClientRect(), x = (ev.clientX - r.left) / r.width - .5, y = (ev.clientY - r.top) / r.height - .5; ben.style.setProperty('--ry', (x * 14).toFixed(2) + 'deg'); ben.style.setProperty('--rx', (-y * 12).toFixed(2) + 'deg'); ben.style.setProperty('--dx', (x * 10).toFixed(1) + 'px'); ben.style.setProperty('--dy', (y * 10).toFixed(1) + 'px'); });
+        ben.addEventListener('pointerleave', function () { ['--rx', '--ry', '--dx', '--dy'].forEach(function (k) { ben.style.removeProperty(k); }); });
+      }
       bao = man.querySelector('.mdn-bao');
       man.querySelector('.mdn-nho input').addEventListener('change', function (ev) { try { localStorage.setItem('khoa-nho-dn', ev.target.checked ? '1' : '0'); } catch (x) {} });
     }
