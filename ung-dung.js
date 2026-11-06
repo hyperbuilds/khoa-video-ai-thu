@@ -123,6 +123,7 @@
   nutGd.addEventListener('click', function () { var v = laToi() ? 'sang' : 'toi'; caiDat('giao-dien', v); datGd(v); });
   $('.nut-gon').addEventListener('click', function () { var on = document.documentElement.classList.toggle('gon-muc'); caiDat('gon-muc', on ? '1' : '0'); });
   if (caiDat('gon-muc') === '1') document.documentElement.classList.add('gon-muc');
+  if (caiDat('khung-rong') !== '0') document.documentElement.classList.add('khung-rong'); // khung video rộng hết trang = MẶC ĐỊNH (06/11: khung cạnh tài liệu chỉ ~720 điểm ảnh → chữ trong video mờ); nút trên trình phát để tắt
   var nutMenu = $('.nut-menu');
   nutMenu.addEventListener('click', function () { var on = document.documentElement.classList.toggle('mo-muc'); nutMenu.setAttribute('aria-expanded', on ? 'true' : 'false'); });
 
@@ -664,8 +665,13 @@
     lui: '<svg viewBox="0 0 24 24"><path d="M12 5V2L7 6l5 4V7a6 6 0 1 1-6 6H4a8 8 0 1 0 8-8z"/><text x="12" y="16.2" text-anchor="middle" font-size="6.4" font-weight="700" font-family="system-ui,sans-serif">10</text></svg>',
     am: '<svg viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9zm11.5 3a3.5 3.5 0 0 0-2-3.15v6.3a3.5 3.5 0 0 0 2-3.15z"/></svg>',
     tat: '<svg viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9zm12.6 3 2.1-2.1-1.4-1.4-2.1 2.1-2.1-2.1-1.4 1.4 2.1 2.1-2.1 2.1 1.4 1.4 2.1-2.1 2.1 2.1 1.4-1.4z"/></svg>',
-    chep: '<svg viewBox="0 0 24 24"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h10v2H4z"/></svg>', to: '<svg viewBox="0 0 24 24"><path d="M5 5h5v2H7v3H5zm9 0h5v5h-2V7h-3zM5 14h2v3h3v2H5zm12 3v-3h2v5h-5v-2z"/></svg>'
+    chep: '<svg viewBox="0 0 24 24"><path d="M4 6h16v2H4zm0 5h16v2H4zm0 5h10v2H4z"/></svg>', to: '<svg viewBox="0 0 24 24"><path d="M5 5h5v2H7v3H5zm9 0h5v5h-2V7h-3zM5 14h2v3h3v2H5zm12 3v-3h2v5h-5v-2z"/></svg>',
+    rong: '<svg viewBox="0 0 24 24"><path fill-rule="evenodd" d="M2 6h20v12H2zm2 2v8h16V8z"/><path d="M7 11l-2 1 2 1zm10 0 2 1-2 1z"/></svg>'
   };
+  // ---- CHẤT LƯỢNG (user 06/11): bản web có nhiều mức (v.chat, cao → thấp, do dong-goi-web.mjs ghi). Mặc định 2K; bài chưa có 2K thì lấy mức cao nhất có.
+  //      Lựa chọn lưu trên máy người học (trinh-chat-luong). Mức đang chọn không tải được → tự lùi xuống mức thấp hơn.
+  var MO_CL = { '2k': 'nét nhất', '1080': 'Full HD', '720': 'mạng yếu' };
+  function chatDau(CL) { var m = caiDat('trinh-chat-luong') || '2k'; return CL.some(function (c) { return c.ma === m; }) ? m : (CL[0] && CL[0].ma); }
   // ---- LUẬT XEM (user 06/11): không tua tới phần chưa xem, chỉ xem lại; tốc độ tối đa 1.1×; chuyển tab / rời trang là dừng;
   //      chỉ cộng thời gian lúc video đang chạy và trang đang hiện; bài chỉ tính "đã xem" khi đã xem tới gần hết thật.
   var TOC_MUC = [1, 1.1], TOC_MAX = 1.1;
@@ -685,8 +691,10 @@
     var bdC = ch.map(function (c, k) { return k ? c.t : 0; }), daiC = bdC.map(function (t, k) { return Math.max(.5, (k < n - 1 ? bdC[k + 1] : tong) - t); });
     var toc = tocLuu(), tat = caiDat('trinh-tat-am') === '1', amL = amLuu(), thay = null, raf = 0, cuoi = 0, luuLuc = 0, daMo = false; // daMo: đếm 1 lượt xem cho mỗi lần mở bài
     var tiep = R.vi_tri > 3 && R.vi_tri < tong - 3 ? Math.min(R.vi_tri, R.moc) : 0;
+    var CL = v.chat || [], clMa = chatDau(CL);
+    function clCua(ma) { return CL.filter(function (c) { return c.ma === ma; })[0]; }
     host.innerHTML = '<div class="trinh trinh-video dung" tabindex="0" role="region" aria-label="Video bài học: ' + e(bai.ten) + '. Phím cách để phát hoặc dừng, mũi tên trái để lùi lại, lên xuống để chỉnh âm lượng.">' +
-      '<div class="san"><video preload="metadata" playsinline disablepictureinpicture controlslist="nodownload noplaybackrate" poster="' + e(v.anh) + '" src="' + e(encodeURI(v.src)) + '"></video>' +
+      '<div class="san"><video preload="metadata" playsinline disablepictureinpicture controlslist="nodownload noplaybackrate" poster="' + e(v.anh) + '" src="' + e(encodeURI(CL.length ? clCua(clMa).src : v.src)) + '"></video>' +
       '<div class="man-cho"><button type="button"><i></i><span>' + (tiep ? 'Xem tiếp từ ' + phut(tiep) : 'Xem bài') + '<small>' + phut(tong) + ' · ' + n + ' đoạn · có phụ đề</small></span></button></div></div>' +
       '<div class="dk"><button type="button" data-l="phat" aria-label="Phát">' + BIEU.phat + '</button>' +
         '<button type="button" data-l="lui" aria-label="Lùi 10 giây" title="Lùi 10 giây (mũi tên trái)">' + BIEU.lui + '</button>' +
@@ -695,7 +703,10 @@
           daiC.map(function (d, k) { return '<span style="flex-grow:' + d.toFixed(2) + '" title="' + e(ch[k].phan) + '"><b></b><i></i></span>'; }).join('') + '</div>' +
         '<button type="button" data-l="toc" class="rong-chu" aria-label="Tốc độ phát (tối đa 1.1×)" title="Tốc độ: 1× hoặc 1.1×">' + toc + '×</button>' +
         oAmLuong(amL, tat) +
+        (CL.length > 1 ? '<span class="cl-o"><button type="button" data-l="cl" aria-haspopup="menu" aria-expanded="false" aria-label="Chất lượng video" title="Chất lượng video">' + e(clCua(clMa).nhan) + '</button>' +
+          '<div class="cl-menu" role="menu" aria-label="Chất lượng video" hidden><b>Chất lượng</b>' + CL.map(function (c) { return '<button type="button" role="menuitemradio" data-cl="' + e(c.ma) + '" aria-checked="' + (c.ma === clMa) + '">' + e(c.nhan) + '<small>' + (MO_CL[c.ma] || '') + '</small></button>'; }).join('') + '</div></span>' : '') +
         '<button type="button" data-l="chep" aria-pressed="false" aria-label="Bản chép lời">' + BIEU.chep + '</button>' +
+        '<button type="button" data-l="rong" aria-pressed="' + document.documentElement.classList.contains('khung-rong') + '" aria-label="Khung rộng" title="Khung rộng: video to hết bề ngang trang, nhìn rõ chữ hơn" class="an-nho">' + BIEU.rong + '</button>' +
         '<button type="button" data-l="to" aria-label="Toàn màn hình" class="an-nho">' + BIEU.to + '</button></div></div>';
     var tr = $('.trinh', host), vd = $('video', tr), san = $('.san', tr), chep = $('.ban-chep', host.parentNode), oAm = $('.am-luong', tr);
     vd.playbackRate = toc; vd.defaultPlaybackRate = toc; vd.muted = tat; vd.volume = amL;
@@ -746,7 +757,10 @@
     });
     // tệp video không mở được (thiếu tệp, máy không đọc được) → khung chiếu cũ của bài, không để trang trống
     vd.addEventListener('error', function () {
-      if (thay) return; cancelAnimationFrame(raf);
+      if (thay) return;
+      var iCl = CL.map(function (c) { return c.ma; }).indexOf(clMa);
+      if (iCl >= 0 && iCl < CL.length - 1) { doiChat(CL[iCl + 1].ma, false); baoNho(tr, 'Mức ' + CL[iCl].nhan + ' không tải được — đã chuyển ' + CL[iCl + 1].nhan); return; }
+      cancelAnimationFrame(raf);
       if (chep) { chep.innerHTML = ''; chep.hidden = true; }
       thay = taoTrinh(host, x, false);
     });
@@ -764,15 +778,37 @@
       }
       ve();
     }
+    // đổi chất lượng giữa chừng: giữ chỗ đang xem (không vượt mốc đã xem) và trạng thái đang phát
+    function doiChat(ma, chon) {
+      var c = clCua(ma); moMenu(false); if (!c) return;
+      if (chon) caiDat('trinh-chat-luong', ma);
+      if (ma === clMa) return;
+      clMa = ma; var t = vd.currentTime || 0, chay = !vd.paused && !vd.ended;
+      vd.defaultPlaybackRate = toc; vd.src = encodeURI(c.src);
+      vd.addEventListener('loadedmetadata', function () { try { vd.currentTime = Math.min(t, R.moc); } catch (x5) {} vd.playbackRate = toc; if (chay) { var p = vd.play(); if (p && p.catch) p.catch(function () {}); } else nutPhat(); }, { once: true });
+      var nb = $('[data-l=cl]', tr); if (nb) nb.textContent = c.nhan;
+      $$('[data-cl]', tr).forEach(function (z) { z.setAttribute('aria-checked', z.getAttribute('data-cl') === ma); });
+      if (chon) baoNho(tr, 'Chất lượng: ' + c.nhan);
+    }
+    function moMenu(mo) { var m = $('.cl-menu', tr), nb = $('[data-l=cl]', tr); if (!m) return; m.hidden = !mo; nb.setAttribute('aria-expanded', mo); if (mo) { var dang = $('[aria-checked=true]', m); if (dang) dang.focus(); } }
+    var oCl = $('.cl-o', tr);
+    if (oCl) {
+      oCl.addEventListener('focusout', function (ev) { if (!oCl.contains(ev.relatedTarget)) moMenu(false); });
+      oCl.addEventListener('keydown', function (ev) { if (ev.key === 'Escape') { moMenu(false); $('[data-l=cl]', tr).focus(); ev.stopPropagation(); } });
+    }
     tr.addEventListener('click', function (ev) {
       if (thay) return;
       if (ev.target.closest('.am-luong')) return;
+      var bCl = ev.target.closest('[data-cl]'); if (bCl) { doiChat(bCl.getAttribute('data-cl'), true); ev.stopPropagation(); return; }
+      if (!ev.target.closest('.cl-o')) moMenu(false);
       var b = ev.target.closest('[data-l]');
       if (!b) { if (ev.target.closest('.san')) phatDung(); return; }
       var l = b.getAttribute('data-l');
       if (l === 'phat') phatDung();
       else if (l === 'lui') toi((vd.currentTime || 0) - 10);
-      else if (l === 'toc') { toc = TOC_MUC[(TOC_MUC.indexOf(toc) + 1) % TOC_MUC.length]; caiDat('trinh-toc', toc); b.textContent = toc + '×'; vd.playbackRate = toc; }
+      else if (l === 'toc') { toc = TOC_MUC[(TOC_MUC.indexOf(toc) + 1) % TOC_MUC.length]; caiDat('trinh-toc', toc); b.textContent = toc + '×'; vd.playbackRate = toc; vd.defaultPlaybackRate = toc; }
+      else if (l === 'cl') moMenu($('.cl-menu', tr).hidden);
+      else if (l === 'rong') { var on = document.documentElement.classList.toggle('khung-rong'); caiDat('khung-rong', on ? '1' : '0'); b.setAttribute('aria-pressed', on); setTimeout(function () { tr.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }, 60); }
       else if (l === 'am') { tat = !tat; vd.muted = tat; if (!tat && vd.volume < .05) vd.volume = amL = .6; caiDat('trinh-tat-am', tat ? '1' : '0'); b.innerHTML = tat ? BIEU.tat : BIEU.am; b.setAttribute('aria-pressed', tat); }
       else if (l === 'chep') { if (chep) { chep.hidden = !chep.hidden; b.setAttribute('aria-pressed', !chep.hidden); veChep(); } }
       else if (l === 'to') { try { if (document.fullscreenElement) document.exitFullscreen(); else if (tr.requestFullscreen) tr.requestFullscreen().catch(function () {}); } catch (x3) {} }

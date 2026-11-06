@@ -676,3 +676,22 @@ html.chua-dang-nhap body { overflow: hidden; }
 .kt-cam-ket { display: flex; gap: 10px; align-items: flex-start; padding: 12px 14px; border-radius: 10px; background: var(--cam-mo); border: 1px solid color-mix(in srgb, var(--vang) 50%, transparent); font-size: 14.5px; font-weight: 500; cursor: pointer; }
 .kt-cam-ket input { margin-top: 3px; width: 18px; height: 18px; accent-color: var(--chinh); flex: none; }
 .kt-co { font-size: 13.5px; color: var(--cam); font-weight: 600; }
+
+/* ---------- chọn chất lượng video + khung rộng (06/11) ---------- */
+.cl-o { position: relative; display: inline-flex; }
+.dk .cl-o > button { width: auto; padding: 0 9px; font: 600 12px var(--f-mo); }
+.cl-menu { position: absolute; right: -6px; bottom: calc(100% + 10px); z-index: 20; min-width: 168px; padding: 6px; display: flex; flex-direction: column; gap: 2px; background: var(--mat); color: var(--chu); border: 1px solid var(--vien); border-radius: 14px; box-shadow: var(--bong-to); }
+.cl-menu[hidden] { display: none; }
+.cl-menu b { font: 500 10.5px/1.5 var(--f-mo); letter-spacing: .14em; text-transform: uppercase; color: var(--nhat); padding: 4px 10px 6px; }
+.dk .cl-menu button { width: 100%; height: auto; border-radius: 9px; display: flex; justify-content: space-between; align-items: baseline; gap: 14px; padding: 8px 10px; font: 600 13.5px var(--f); text-align: left; }
+.cl-menu button small { font: 500 11px var(--f-mo); color: var(--nhat); }
+.dk .cl-menu button[aria-checked="true"] { color: var(--chinh); background: var(--chinh-mo); }
+html.khung-rong .bai-luoi { grid-template-columns: minmax(0, 1fr); grid-template-areas: "trai" "tren" "duoi"; grid-template-rows: auto; }
+html.khung-rong .bai-trai { position: static; }
+@media (max-width: 640px) { /* điện thoại: thêm nút chất lượng thì thanh điều khiển chật → thu gọn nút */
+  .dk { gap: 1px; padding: 6px 5px; }
+  .dk button { width: 32px; height: 34px; }
+  .dk .tg { padding: 0 3px; font-size: 11px; }
+  .dk .rong-chu, .dk .cl-o > button { padding: 0 6px; font-size: 11px; }
+  .thanh-tg { padding: 0 2px; gap: 2px; }
+}
