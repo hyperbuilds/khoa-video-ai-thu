@@ -750,3 +750,15 @@ html.khung-rong .bai-trai { position: static; }
 .qt-tl .tra i { color: var(--nhat); }
 .qt-ck { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; font-size: 14px; color: var(--nhat); }
 .qt-ck li.co { color: var(--chu); }
+/* người quản trị (06/11) */
+.qt-ql h2 small { font-size: 13px; color: var(--nhat); font-weight: 500; }
+.qt-ds-qt { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; border: 1px solid var(--vien); border-radius: var(--r); overflow: hidden; }
+.qt-ds-qt li { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--vien); font-size: 14px; }
+.qt-ds-qt li:last-child { border-bottom: 0; }
+.qt-ds-qt li > span:first-child { flex: 1; min-width: 0; }
+.qt-ds-qt li small { display: block; color: var(--nhat); font-size: 12px; }
+.qt-ds-qt .nut { padding: 6px 12px; font-size: 13px; }
+.qt-them-qt { display: flex; flex-wrap: wrap; gap: 10px; align-items: center; }
+.qt-them-qt input { font: inherit; font-size: 14px; padding: 8px 12px; border: 1px solid var(--vien-dam); border-radius: 10px; background: var(--mat); color: var(--chu); min-width: 280px; }
+.qt-bao { font-size: 13px; color: var(--ok); }
+.qt-bao.loi { color: var(--sai); }

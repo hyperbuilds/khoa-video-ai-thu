@@ -27,7 +27,7 @@
   function tai() {
     loi = ''; duLieu = null;
     return MC().goi('tong-hop').then(function (kq) {
-      if (kq && kq.ok) duLieu = { nguoi: (kq.nguoi || []).map(hoc), bai: kq.bai || [], luc: kq.luc };
+      if (kq && kq.ok) duLieu = { nguoi: (kq.nguoi || []).map(hoc), bai: kq.bai || [], luc: kq.luc, ds_qt: kq.ds_quan_tri || { goc: [], them: [] } };
       else loi = kq && kq.loi === 'khong-quyen' ? 'Tài khoản này không có quyền quản trị.' : 'Không tải được dữ liệu (' + ((kq && kq.loi) || 'lỗi') + ').';
     }).catch(function () { loi = 'Không kết nối được máy chủ. Kiểm tra mạng rồi bấm Tải lại.'; });
   }
@@ -71,12 +71,55 @@
       '<div class="qt-cuon"><table class="qt-bang"><thead><tr>' +
         cotDau('ten', 'Học viên') + cotDau('bo_phan', 'Bộ phận') + cotDau('tien_do', 'Tiến độ') + cotDau('phut', 'Phút xem') + cotDau('diem_tb', 'Điểm TB') +
         K.buoi.slice(0, soBuoi).map(function (b, i) { return cotDau('b' + i, 'Buổi ' + b.so); }).join('') + cotDau('lan_cuoi', 'Lần cuối') +
-      '</tr></thead><tbody></tbody></table></div><p class="qt-ghi">Bấm vào một dòng để xem chi tiết bài làm, các lượt thi và cho thêm lượt thi.</p></div>';
+      '</tr></thead><tbody></tbody></table></div><p class="qt-ghi">Bấm vào một dòng để xem chi tiết bài làm, các lượt thi và cho thêm lượt thi.</p>' +
+      '<section class="qt-muc qt-ql" id="qt-ql" aria-labelledby="qt-ql-tieu"></section></div>';
     veDong(main, soBuoi);
     ganNut(main);
+    veQuanTri(main);
     $$('[data-cot]', main).forEach(function (th) { th.addEventListener('click', function () { var c = th.getAttribute('data-cot'); sap = { cot: c, nguoc: sap.cot === c ? !sap.nguoc : c !== 'ten' && c !== 'bo_phan' }; veTong(main); }); });
   }
   function the(nhan, so, phu, lop) { return '<div class="' + (lop || '') + '"><span>' + e(nhan) + '</span><b>' + e(so) + '</b><small>' + e(phu) + '</small></div>'; }
+
+  // ---------------- người quản trị (06/11, user: "thêm ui thêm quản trị vào trang luôn"): xem / thêm / bỏ — máy chủ kiểm quyền + tên miền, ghi Nhật ký quản trị
+  function veQuanTri(main, bao) {
+    var o = $('#qt-ql', main); if (!o || !duLieu) return;
+    var ds = duLieu.ds_qt || { goc: [], them: [] }, toi = ((MC().nguoi() || {}).email || '').toLowerCase(), MIEN = (C.mien || 'hecatech.vn').toLowerCase();
+    var tenCua = function (m) { var h = duLieu.nguoi.filter(function (x) { return (x.email || '').toLowerCase() === m; })[0]; return h ? h.ten : ''; };
+    var dong = function (m, goc) {
+      var t = tenCua(m);
+      return '<li><span><b>' + e(t || m) + '</b>' + (t ? '<small>' + e(m) + '</small>' : '') + '</span>' + (m === toi ? '<span class="qt-chip qt-dang">bạn</span>' : '') +
+        (goc ? '<span class="qt-chip qt-mo" title="Ghi cứng trong máy chủ — không bỏ được trên web">chủ khoá học</span>' : '<button type="button" class="nut" data-bo-qt="' + e(m) + '">Bỏ quyền</button>') + '</li>';
+    };
+    var goiY = duLieu.nguoi.map(function (h) { return (h.email || '').toLowerCase(); }).filter(function (m) { return m && ds.goc.indexOf(m) < 0 && ds.them.indexOf(m) < 0; });
+    o.innerHTML = '<h2 id="qt-ql-tieu">Người quản trị <small>' + (ds.goc.length + ds.them.length) + ' người</small></h2>' +
+      '<p class="phu">Người quản trị xem được toàn bộ kết quả, cho thêm lượt thi, thêm / bỏ người quản trị khác. Chỉ nhận email @' + e(MIEN) + '; người được thêm đăng nhập lại (hoặc tải lại trang) là thấy nút Quản trị.</p>' +
+      '<ul class="qt-ds-qt">' + ds.goc.map(function (m) { return dong(m, true); }).join('') + ds.them.map(function (m) { return dong(m, false); }).join('') + '</ul>' +
+      '<form class="qt-them-qt" novalidate><input type="email" list="qt-goi-y" placeholder="ten@' + e(MIEN) + '" aria-label="Email người quản trị mới" autocomplete="off">' +
+        '<datalist id="qt-goi-y">' + goiY.map(function (m) { return '<option value="' + e(m) + '">' + e(tenCua(m)) + '</option>'; }).join('') + '</datalist>' +
+        '<button type="submit" class="nut chinh">+ Thêm quản trị</button><span class="qt-bao" role="status" aria-live="polite">' + e(bao || '') + '</span></form>';
+    var form = $('.qt-them-qt', o), oEmail = $('input', form), oBao = $('.qt-bao', o);
+    form.addEventListener('submit', function (ev) {
+      ev.preventDefault();
+      var m = oEmail.value.trim().toLowerCase();
+      if (!/^[^@\s]+@[^@\s]+$/.test(m) || m.split('@')[1] !== MIEN) { oBao.textContent = 'Nhập email công ty dạng ten@' + MIEN + '.'; oBao.className = 'qt-bao loi'; oEmail.focus(); return; }
+      if (ds.goc.indexOf(m) >= 0 || ds.them.indexOf(m) >= 0) { oBao.textContent = m + ' đã là người quản trị.'; oBao.className = 'qt-bao'; return; }
+      doiQt('them-quan-tri', m, 'Đã thêm ' + m + ' làm người quản trị.');
+    });
+    $$('[data-bo-qt]', o).forEach(function (n) {
+      n.addEventListener('click', function () {
+        var m = n.getAttribute('data-bo-qt');
+        if (!confirm('Bỏ quyền quản trị của ' + m + (m === toi ? ' (chính bạn — bạn sẽ không vào được trang này nữa)' : '') + '?')) return;
+        doiQt('bo-quan-tri', m, 'Đã bỏ quyền quản trị của ' + m + '.');
+      });
+    });
+    function doiQt(loai, m, xong) {
+      $$('button', o).forEach(function (b) { b.disabled = true; }); oBao.textContent = 'Đang lưu…'; oBao.className = 'qt-bao';
+      MC().goi(loai, { email: m }).then(function (kq) {
+        if (kq && kq.ok) { duLieu.ds_qt = kq.ds_quan_tri; if (loai === 'bo-quan-tri' && m === toi) { location.hash = '#/'; return; } veQuanTri(main, xong); }
+        else { veQuanTri(main, kq && kq.loi === 'email' ? 'Chỉ nhận email @' + MIEN + '.' : kq && kq.loi === 'goc' ? 'Người này ghi cứng trong máy chủ, không bỏ được trên web.' : kq && kq.loi === 'khong-quyen' ? 'Tài khoản này không còn quyền quản trị.' : 'Chưa lưu được (' + ((kq && kq.loi) || 'lỗi') + ') — thử lại.'); var b2 = $('.qt-bao', o); if (b2) b2.className = 'qt-bao loi'; }
+      }).catch(function () { veQuanTri(main, 'Mất kết nối — thử lại.'); });
+    }
+  }
   function cotDau(c, chu) { var dang = sap.cot === c; return '<th scope="col" data-cot="' + c + '" aria-sort="' + (dang ? (sap.nguoc ? 'descending' : 'ascending') : 'none') + '" tabindex="0">' + e(chu) + (dang ? (sap.nguoc ? ' ↓' : ' ↑') : '') + '</th>'; }
   // cần chú ý = có cờ khi thi (rời trang nhiều, làm quá nhanh, dán vào tự luận) hoặc chưa đạt mà đã làm hết lượt cơ bản
   function canChuY(h) { return h.buoi.some(function (b) { if (!b || b.dang) return false; var lan = +((b.chu.match(/(\d+) lần/) || [])[1] || 0); return b.co || (b.diem != null && !b.dat && lan >= QC.kt_lan); }); }
