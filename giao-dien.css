@@ -613,65 +613,67 @@ html.ghi .trinh { border: 0; border-radius: 0; box-shadow: none; }
 
 /* ---------- đăng nhập tài khoản công ty (bản online, dang-nhap.js) ---------- */
 html.chua-dang-nhap body { overflow: hidden; }
-/* 06/11 tối, bản 3: TOÀN MÀN HÌNH nền ngà loang (như khung mở bài video đã duyệt) — trái: thương hiệu nền tảng + huy hiệu sứ, lá men khắc chìm,
-   quỹ đạo + hạt sáng, vệt sáng, bong bóng; phải: thẻ đăng nhập. Luôn tông sáng (đặt lại biến màu, kể cả khi trang đang giao diện tối).
-   Chuyển động chạy cả khi máy bật "giảm chuyển động" (user muốn thấy; biên độ vừa phải, không nhấp nháy). */
-.man-dang-nhap { position: fixed; inset: 0; z-index: 200; overflow: auto; color-scheme: light;
-  --mat: #FFFFFF; --mat-2: #F3F4EF; --vien: #E3E3DF; --vien-dam: #CFCFCB; --chu: #2E312F; --chu-2: #58585A; --nhat: #6B6B6D; --chinh: #1F714B; --chinh-mo: #E4F6EB; --logo-chu: #58585A; --logo-la: #4F9263;
+/* 06/11 tối, bản 4: nền sáng loang toàn màn hình (giữ từ bản 3) + khung đăng nhập POPUP 2 nửa nổi giữa (theo ảnh mẫu user gửi):
+   trái xanh lục bảo sâu có quầng sáng theo chuột + lá Hecatech in chìm trọn hình, phải trắng. Luôn tông sáng; chuyển động chạy cả khi
+   máy bật "giảm chuyển động" (user muốn thấy; biên độ nhỏ, không nhấp nháy). */
+.man-dang-nhap { position: fixed; inset: 0; z-index: 200; overflow: auto; color-scheme: light; display: grid; place-items: center; padding: 28px;
+  --mat: #FFFFFF; --mat-2: #F3F4EF; --vien: #E3E3DF; --vien-dam: #CFCFCB; --chu: #2E312F; --chu-2: #58585A; --nhat: #6B6B6D; --chinh: #1F714B; --chinh-mo: #E4F6EB;
+  --la-sang: #BDEFD2; --vang-nhat: #E3C66E;
   background: #F7F7F2; color: var(--chu); }
 .mdn-nen { position: fixed; inset: 0; z-index: 0; pointer-events: none; overflow: hidden; background: radial-gradient(130% 100% at 0% 0%, #FCFBF5 0%, #F5F7EF 45%, #EDF4EC 100%); }
 .mdn-nen i { position: absolute; border-radius: 50%; filter: blur(70px); }
 .mdn-nen i:nth-child(1) { width: 640px; height: 640px; left: -180px; top: -200px; background: #CDEBD8; opacity: .8; animation: mdn-troi1 16s ease-in-out infinite alternate; }
-.mdn-nen i:nth-child(2) { width: 560px; height: 560px; left: 24%; bottom: -260px; background: #F5E6B8; opacity: .7; animation: mdn-troi2 20s ease-in-out infinite alternate; }
+.mdn-nen i:nth-child(2) { width: 560px; height: 560px; left: 30%; bottom: -260px; background: #F5E6B8; opacity: .7; animation: mdn-troi2 20s ease-in-out infinite alternate; }
 .mdn-nen i:nth-child(3) { width: 460px; height: 460px; right: -140px; top: 6%; background: #D8EFE3; opacity: .85; animation: mdn-troi3 18s ease-in-out infinite alternate; }
 @keyframes mdn-troi1 { to { transform: translate(160px, 110px) scale(1.15); } }
 @keyframes mdn-troi2 { to { transform: translate(-140px, -90px) scale(1.1); } }
 @keyframes mdn-troi3 { to { transform: translate(-90px, 140px) scale(.9); } }
-.mdn-khung { position: relative; z-index: 1; width: 100%; max-width: 1380px; min-height: 100vh; margin: 0 auto; padding: 36px 56px; box-sizing: border-box;
-  display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(380px, 460px); gap: 56px; align-items: center; }
-.mdn-ben { min-width: 0; display: flex; flex-direction: column; justify-content: space-between; align-self: stretch; gap: 10px; }
-.mdn-logo { display: block; width: 136px; height: 31px; color: var(--logo-chu); animation: mdn-len .8s .1s var(--de) both; }
-.mdn-huy-o { position: relative; width: min(420px, 50vh); aspect-ratio: 1; margin: 0 auto; animation: mdn-noi 7s ease-in-out infinite; }
-@keyframes mdn-noi { 0%, 100% { translate: 0 0; rotate: -3deg; } 50% { translate: 0 -18px; rotate: 3deg; } }
-.mdn-huy-nghieng { position: relative; z-index: 1; width: 100%; height: 100%; transform: perspective(900px) rotateX(var(--rx, 7deg)) rotateY(var(--ry, -12deg)); transition: transform .6s var(--de);
-  animation: mdn-vao-huy 1.2s .15s var(--de) both; }
-@keyframes mdn-vao-huy { from { opacity: 0; scale: .82; } to { opacity: 1; scale: 1; } }
-.mdn-huy { display: block; width: 100%; height: 100%; overflow: visible; }
-.mdn-huy-bong { position: absolute; z-index: 0; left: 20%; right: 20%; bottom: -7%; height: 9%; border-radius: 50%; background: radial-gradient(closest-side, rgba(27, 74, 48, .26), transparent); animation: mdn-bong 7s ease-in-out infinite; }
-@keyframes mdn-bong { 0%, 100% { translate: 0 0; scale: 1; opacity: 1; } 50% { translate: 0 18px; scale: .8; opacity: .65; } }
-.mdn-quy { stroke-dasharray: 1000; animation: mdn-ve 1.8s .5s var(--de) both; }
-@keyframes mdn-ve { from { stroke-dashoffset: 1000; } to { stroke-dashoffset: 0; } }
-.mdn-bot { transform-box: fill-box; transform-origin: center; }
-.mdn-bot.b1 { animation: mdn-bot1 6s ease-in-out infinite; } .mdn-bot.b2 { animation: mdn-bot2 7.5s ease-in-out infinite; } .mdn-bot.b3 { animation: mdn-bot1 5s ease-in-out -2s infinite; }
-@keyframes mdn-bot1 { 0%, 100% { transform: translate(0, 0) scale(1); } 50% { transform: translate(-10px, -18px) scale(1.08); } }
-@keyframes mdn-bot2 { 0%, 100% { transform: translate(0, 0); } 50% { transform: translate(12px, -14px); } }
 @keyframes mdn-len { from { opacity: 0; transform: translateY(16px); filter: blur(6px); } to { opacity: 1; transform: none; filter: none; } }
-.mdn-noi { display: flex; flex-direction: column; gap: 14px; }
+@keyframes mdn-vao { from { opacity: 0; transform: translateY(26px) scale(.97); } to { opacity: 1; transform: none; } }
+/* popup */
+.mdn-khung { position: relative; z-index: 1; width: 100%; min-width: 0; max-width: 1060px; display: grid; grid-template-columns: 1.08fr 1fr; border-radius: 30px; overflow: hidden;
+  background: #fff; border: 1px solid rgba(255, 255, 255, .7); box-shadow: 0 60px 120px -50px rgba(14, 60, 38, .55), 0 18px 40px -24px rgba(14, 60, 38, .35), 0 0 0 8px rgba(255, 255, 255, .45);
+  animation: mdn-vao .9s var(--de) both; }
+/* trái: lục bảo sâu, quầng sáng theo chuột (--mx/--my), hạt mịn */
+.mdn-ben { position: relative; overflow: hidden; isolation: isolate; min-height: 620px; padding: 44px 46px 40px; color: #fff; --logo-chu: #FFFFFF; --logo-la: var(--la-sang);
+  background: radial-gradient(60% 55% at var(--mx, 18%) var(--my, 8%), rgba(80, 190, 135, .38), transparent 70%), radial-gradient(50% 45% at 100% 100%, rgba(227, 198, 110, .16), transparent 72%),
+    linear-gradient(158deg, #16694A 0%, #0E5139 48%, #082F21 100%);
+  transition: background-position .3s; }
+.mdn-ben::after { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none; opacity: .14; background-image: radial-gradient(rgba(255, 255, 255, .55) .7px, transparent .8px); background-size: 16px 16px;
+  -webkit-mask-image: linear-gradient(165deg, transparent 15%, #000 60%, transparent 98%); mask-image: linear-gradient(165deg, transparent 15%, #000 60%, transparent 98%); }
+/* lá Hecatech in chìm, trọn hình ở nửa phải của mảng xanh; nghiêng nhẹ theo chuột */
+.mdn-dau { position: absolute; z-index: -1; right: -3%; top: 57%; height: 82%; width: auto; overflow: visible; pointer-events: none;
+  transform: translateY(-50%) perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, -6deg)); transition: transform .6s var(--de); animation: mdn-hien-la 1.4s .2s var(--de) both; }
+@keyframes mdn-hien-la { from { opacity: 0; scale: .92; } to { opacity: 1; scale: 1; } }
+.mdn-noi { position: relative; z-index: 1; display: flex; flex-direction: column; gap: 16px; height: 100%; }
 .mdn-noi > * { animation: mdn-len .9s var(--de) both; }
-.mdn-noi > :nth-child(1) { animation-delay: .35s; } .mdn-noi > :nth-child(2) { animation-delay: .45s; } .mdn-noi > :nth-child(3) { animation-delay: .58s; } .mdn-noi > :nth-child(4) { animation-delay: .7s; }
-.mdn-nhan { font: 500 11px/1.5 var(--f-mo); letter-spacing: .18em; text-transform: uppercase; color: var(--chinh); display: flex; align-items: center; gap: 10px; }
-.mdn-nhan::before { content: ""; width: 26px; height: 1.5px; background: var(--trang-tri, #2E9A68); }
-.mdn-slogan { margin: 0; font: 700 clamp(34px, 3.7vw, 54px)/1.08 var(--f); letter-spacing: -.04em; color: var(--chu); }
+.mdn-noi > :nth-child(1) { animation-delay: .2s; } .mdn-noi > :nth-child(2) { animation-delay: .3s; } .mdn-noi > :nth-child(3) { animation-delay: .4s; }
+.mdn-noi > :nth-child(4) { animation-delay: .52s; } .mdn-noi > :nth-child(5) { animation-delay: .64s; }
+.mdn-logo { display: block; width: 128px; height: 29px; color: var(--logo-chu); }
+.mdn-nhan { font: 500 11px/1.5 var(--f-mo); letter-spacing: .18em; text-transform: uppercase; color: rgba(255, 255, 255, .82); display: flex; align-items: center; gap: 10px; margin-top: 18px; }
+.mdn-nhan::before { content: ""; width: 26px; height: 1.5px; background: var(--vang-nhat); }
+.mdn-slogan { margin: 0; font: 700 clamp(32px, 3.6vw, 48px)/1.1 var(--f); letter-spacing: -.04em; text-shadow: 0 2px 24px rgba(0, 0, 0, .16); }
 .mdn-slogan span { display: block; }
-.mdn-slogan em { display: block; margin-top: .06em; font: italic 500 1.03em/1.1 var(--f-ng); letter-spacing: -.02em; color: var(--chinh); }
-.mdn-phu { font-size: 16px; line-height: 1.6; color: var(--chu-2); max-width: 540px; }
-.mdn-loi { list-style: none; margin: 6px 0 0; padding: 0; display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 12px 26px; max-width: 600px; }
-.mdn-loi li { display: grid; grid-template-columns: 38px 1fr; gap: 12px; align-items: center; font-size: 13.5px; line-height: 1.4; color: var(--nhat); }
-.mdn-loi li i { width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center; background: linear-gradient(145deg, #ffffff, #eef2ec);
-  box-shadow: 4px 5px 12px rgba(31, 80, 55, .12), -3px -3px 9px rgba(255, 255, 255, .9), inset 0 0 0 1px rgba(255, 255, 255, .8); }
-.mdn-loi li svg { width: 19px; height: 19px; fill: none; stroke: var(--chinh); stroke-width: 1.7; stroke-linecap: round; stroke-linejoin: round; }
-.mdn-loi b { display: block; color: var(--chu); font-size: 14.5px; font-weight: 600; }
-.mdn-the { min-width: 0; display: flex; flex-direction: column; gap: 16px; padding: 40px 38px 34px; background: rgba(255, 255, 255, .92); border: 1px solid rgba(227, 227, 223, .9); border-radius: 26px;
-  box-shadow: 0 40px 90px -46px rgba(20, 64, 42, .42), 0 2px 8px rgba(20, 64, 42, .05); backdrop-filter: blur(12px); animation: mdn-len 1s .25s var(--de) both; }
+.mdn-slogan em { display: block; margin-top: .06em; font: italic 500 1.04em/1.1 var(--f-ng); letter-spacing: -.02em; color: var(--la-sang); }
+.mdn-phu { font-size: 15px; line-height: 1.6; color: rgba(255, 255, 255, .84); max-width: 420px; }
+.mdn-loi { list-style: none; margin: auto 0 0; padding: 0; display: flex; flex-direction: column; gap: 13px; max-width: 420px; }
+.mdn-loi li { display: grid; grid-template-columns: 36px 1fr; gap: 12px; align-items: center; font-size: 13px; line-height: 1.4; color: rgba(255, 255, 255, .72); }
+.mdn-loi li i { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; border: 1.5px solid rgba(189, 239, 210, .55); background: rgba(255, 255, 255, .06); box-shadow: inset 0 1px 0 rgba(255, 255, 255, .12); }
+.mdn-loi li svg { width: 20px; height: 20px; fill: none; stroke: var(--la-sang); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
+.mdn-loi b { display: block; color: #fff; font-size: 14.5px; font-weight: 600; }
+/* phải: trắng */
+.mdn-the { min-width: 0; display: flex; flex-direction: column; justify-content: center; gap: 16px; padding: 46px 44px 40px; background: #fff; }
 .mdn-the > * { animation: mdn-len .8s var(--de) both; }
-.mdn-the > :nth-child(1) { animation-delay: .45s; } .mdn-the > :nth-child(2) { animation-delay: .53s; } .mdn-the > :nth-child(3) { animation-delay: .61s; }
-.mdn-the > :nth-child(4) { animation-delay: .69s; } .mdn-the > :nth-child(5) { animation-delay: .77s; } .mdn-the > :nth-child(n+6) { animation-delay: .85s; }
-.mdn-khoa { position: relative; display: flex; flex-direction: column; gap: 2px; padding: 13px 16px 13px 18px; border-radius: 16px; background: var(--chinh-mo); border: 1px solid rgba(31, 113, 75, .18); overflow: hidden; }
-.mdn-khoa::before { content: ""; position: absolute; left: 0; top: 12px; bottom: 12px; width: 3px; border-radius: 0 3px 3px 0; background: var(--chinh); }
-.mdn-khoa span { font: 500 10.5px/1.5 var(--f-mo); letter-spacing: .16em; text-transform: uppercase; color: var(--chinh); }
-.mdn-khoa b { font-size: 16.5px; font-weight: 650; color: var(--chu); letter-spacing: -.01em; }
+.mdn-the > :nth-child(1) { animation-delay: .35s; } .mdn-the > :nth-child(2) { animation-delay: .43s; } .mdn-the > :nth-child(3) { animation-delay: .51s; }
+.mdn-the > :nth-child(4) { animation-delay: .59s; } .mdn-the > :nth-child(5) { animation-delay: .67s; } .mdn-the > :nth-child(n+6) { animation-delay: .75s; }
+.mdn-khoa { display: grid; grid-template-columns: 44px 1fr; gap: 14px; align-items: center; padding: 14px 16px; border-radius: 18px; background: linear-gradient(135deg, #EAF7EF, #E1F3E8); border: 1px solid rgba(31, 113, 75, .16); }
+.mdn-khoa > i { width: 44px; height: 44px; border-radius: 50%; display: grid; place-items: center; background: var(--chinh); box-shadow: 0 8px 18px -8px rgba(31, 113, 75, .7), inset 0 1px 0 rgba(255, 255, 255, .25); }
+.mdn-khoa > i svg { width: 22px; height: 22px; fill: #fff; margin-left: 2px; }
+.mdn-khoa > span { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.mdn-khoa > span > span { font: 500 10.5px/1.5 var(--f-mo); letter-spacing: .16em; text-transform: uppercase; color: var(--chinh); }
+.mdn-khoa b { font-size: 16px; font-weight: 650; color: var(--chu); letter-spacing: -.01em; }
 .mdn-khoa small { font-size: 12.5px; color: var(--nhat); }
-.mdn-the h1 { font-size: clamp(25px, 2.4vw, 30px); letter-spacing: -.03em; line-height: 1.15; margin-top: 4px; color: var(--chu); }
+.mdn-the h1 { font-size: clamp(25px, 2.5vw, 31px); letter-spacing: -.03em; line-height: 1.15; margin-top: 6px; color: var(--chu); }
 .mdn-the p { color: var(--chu-2); font-size: 14.5px; line-height: 1.55; }
 .mdn-nut { min-height: 46px; margin-top: 2px; max-width: 100%; overflow: hidden; }
 .mdn-nho { display: flex; gap: 12px; align-items: flex-start; padding: 12px 14px; border: 1px solid var(--vien); border-radius: 14px; background: var(--mat-2); cursor: pointer; transition: border-color .2s; }
@@ -682,15 +684,17 @@ html.chua-dang-nhap body { overflow: hidden; }
 .mdn-bao { min-height: 1.2em; color: #B42318 !important; font-size: 13.5px !important; margin: -4px 0; }
 .mdn-the .mdn-rieng { display: flex; gap: 9px; align-items: flex-start; font-size: 12.5px; color: var(--nhat); border-top: 1px solid var(--vien); padding-top: 14px; }
 .mdn-rieng svg { flex: none; width: 16px; height: 16px; margin-top: 1px; fill: none; stroke: var(--chinh); stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round; }
-@media (max-width: 1100px) { .mdn-khung { grid-template-columns: minmax(0, 1fr) minmax(340px, 410px); gap: 34px; padding: 30px 32px; } .mdn-loi { grid-template-columns: 1fr; } }
-@media (max-height: 780px) and (min-width: 861px) { .mdn-huy-o { width: min(300px, 42vh); } .mdn-loi { display: none; } }
+@media (max-height: 760px) and (min-width: 861px) { .mdn-ben { min-height: 0; } .mdn-phu { display: none; } }
 @media (max-width: 860px) {
-  .mdn-khung { grid-template-columns: minmax(0, 1fr); min-height: 0; padding: 18px 16px 24px; gap: 18px; align-items: start; }
-  .mdn-ben { align-self: auto; gap: 8px; }
-  .mdn-huy-o { width: 150px; margin: 0 auto 4px; }
+  .man-dang-nhap { place-items: start center; padding: 12px; }
+  .mdn-khung { grid-template-columns: minmax(0, 1fr); border-radius: 24px; box-shadow: 0 30px 70px -40px rgba(14, 60, 38, .55), 0 0 0 6px rgba(255, 255, 255, .45); }
+  .mdn-ben { min-height: 0; padding: 26px 22px 26px; }
+  .mdn-noi { gap: 10px; }
+  .mdn-nhan { margin-top: 10px; }
   .mdn-loi, .mdn-phu { display: none; } /* điện thoại: mở ra là thấy nút đăng nhập */
   .mdn-slogan { font-size: 30px; }
-  .mdn-the { padding: 26px 22px 22px; border-radius: 22px; }
+  .mdn-dau { height: 125%; right: -12%; }
+  .mdn-the { padding: 24px 22px 22px; }
 }
 .tai-khoan { display: flex; align-items: center; gap: 8px; min-width: 0; }
 .tai-khoan img, .tai-khoan > i { flex: none; width: 32px; height: 32px; border-radius: 50%; object-fit: cover; display: grid; place-items: center; background: var(--chinh-mo); color: var(--chinh); font: 600 14px var(--f); font-style: normal; }
