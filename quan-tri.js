@@ -190,4 +190,6 @@
 
   var $ = function (s, r) { return (r || document).querySelector(s); };
   var $$ = function (s, r) { return Array.prototype.slice.call((r || document).querySelectorAll(s)); };
+  // tệp này nạp SAU ung-dung.js + dang-nhap.js: mở thẳng / F5 ở #/quan-tri thì lần vẽ đầu chưa có trang này → vẽ lại
+  if (/^#\/quan-tri/.test(location.hash) && APP.veLai) APP.veLai();
 })();
