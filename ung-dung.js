@@ -415,7 +415,7 @@
     var bd = [], tong = 0; dai.forEach(function (d, i) { bd[i] = tong; tong += d; });
     var toc = tocLuu(), amL = amLuu(), tatAm = caiDat('trinh-tat-am') === '1', luuLuc = 0;
     // chỉ bài thật mới ghi tiến độ (ảnh bìa trang chủ, ảnh tĩnh, máy xuất MP4 thì không)
-    var demXem = !tron && bai.id !== 'poster', R = demXem ? hoSoXem(bai.id) : { moc: 1e9, giay: 0, vi_tri: 0 };
+    var demXem = !tron && bai.id !== 'poster', R = demXem ? hoSoXem(bai.id) : { moc: 1e9, giay: 0, vi_tri: 0 }, lanNay = null;
     var tiep = demXem && R.vi_tri > 3 && R.vi_tri < tong - 3 ? Math.min(R.vi_tri, R.moc) : 0;
     var nhe = !ghi && caiDat('trinh-nhe') === '1', pd = ghi || caiDat('trinh-pd') !== '0';
     if (ghi) toc = 1;
@@ -566,6 +566,7 @@
         // thời gian xem thật: chỉ cộng khi trang đang hiện; mốc "đã xem tới" đi theo dòng chạy tự nhiên
         if (demXem && document.visibilityState === 'visible') {
           R.giay += dt; var tt = bd[S.i] + Math.min(S.ts, dai[S.i]); if (tt > R.moc && tt <= R.moc + 2.5) R.moc = tt;
+          if (!lanNay) { lanNay = batDauLanHoc(R, tt); R.luot = (+R.luot || 0) + 1; } demLan(lanNay, dt, tt, tong);
           R.vi_tri = Math.round(tt * 10) / 10; if (Date.now() - luuLuc > 10000) { luuLuc = Date.now(); luu(); }
         }
         if (S.ts >= dai[S.i]) { if (S.i < n - 1) vao(S.i + 1, 0, true, true); else ketThuc(); }
@@ -684,12 +685,23 @@
     b.textContent = chu; b.classList.add('hien'); clearTimeout(b._t); b._t = setTimeout(function () { b.classList.remove('hien'); }, 2200);
   }
   function hoSoXem(id) { var r = D.bai[id] = D.bai[id] || {}; r.moc = +r.moc || 0; r.giay = +r.giay || 0; r.vi_tri = +r.vi_tri || 0; return r; }
+  // LẦN HỌC (06/11, user: "user học lại nhiều lần thì ghi lại từng lần khác nhau — lần học 1 2 3"): mỗi lần mở bài và bấm phát = 1 lần học riêng
+  // {bd: lúc bắt đầu (ms), giay: thời gian xem thật trong lần đó, tu / toi: xem từ giây … tới giây …, het: xem tới cuối trong lần đó}.
+  // Khoá = lúc bắt đầu → gộp dữ liệu từ máy khác không lẫn lần; giữ 30 lần gần nhất mỗi bài.
+  function batDauLanHoc(R, viTri) {
+    R.lan_hoc = R.lan_hoc || {}; var k = String(Date.now()), v = Math.round(+viTri || 0);
+    var l = R.lan_hoc[k] = { bd: +k, giay: 0, tu: v, toi: v, het: false };
+    var ks = Object.keys(R.lan_hoc).sort(); while (ks.length > 30) delete R.lan_hoc[ks.shift()];
+    return l;
+  }
+  function dsLanHoc(r) { var o = (r && r.lan_hoc) || {}; return Object.keys(o).sort().map(function (k) { return o[k]; }).filter(function (l) { return l && l.bd; }); }
+  function demLan(l, dt, viTri, tong) { if (!l) return; l.giay = (+l.giay || 0) + dt; var v = Math.round(viTri); if (v > l.toi) l.toi = v; if (tong && viTri >= tong - 2.5) l.het = true; }
   function baoDaXem(id) { try { document.dispatchEvent(new CustomEvent('da-xem-bai', { detail: id })); } catch (x) {} }
 
   function taoVideo(host, x, v) {
     var bai = x.bai, ch = v.chuong || [], n = ch.length, tong = v.dai || 0, R = hoSoXem(bai.id);
     var bdC = ch.map(function (c, k) { return k ? c.t : 0; }), daiC = bdC.map(function (t, k) { return Math.max(.5, (k < n - 1 ? bdC[k + 1] : tong) - t); });
-    var toc = tocLuu(), tat = caiDat('trinh-tat-am') === '1', amL = amLuu(), thay = null, raf = 0, cuoi = 0, luuLuc = 0, daMo = false; // daMo: đếm 1 lượt xem cho mỗi lần mở bài
+    var toc = tocLuu(), tat = caiDat('trinh-tat-am') === '1', amL = amLuu(), thay = null, raf = 0, cuoi = 0, luuLuc = 0, daMo = false, lanNay = null; // daMo: đếm 1 lượt xem cho mỗi lần mở bài; lanNay: lần học đang diễn ra
     var tiep = R.vi_tri > 3 && R.vi_tri < tong - 3 ? Math.min(R.vi_tri, R.moc) : 0;
     var CL = v.chat || [], clMa = chatDau(CL);
     function clCua(ma) { return CL.filter(function (c) { return c.ma === ma; })[0]; }
@@ -735,6 +747,7 @@
       if (vd.paused || vd.seeking || document.visibilityState !== 'visible') return;
       R.giay += dt;
       var t = vd.currentTime || 0; if (t > R.moc && t <= R.moc + 2.5) R.moc = t;
+      demLan(lanNay, dt, t, tong);
       if (!R.xem && tong && R.moc >= tong - 2.5) danhDauXem();
       ghi(false);
     }
@@ -742,7 +755,7 @@
     vd.addEventListener('timeupdate', function () { dem(); if (document.hidden) ve(); });
     function danhDauXem() { if (R.xem) return; R.xem = true; R.xem_luc = new Date().toISOString(); luu(); veMucLuc(bai.id); baoDaXem(bai.id); }
     function nutPhat() { var b = $('[data-l=phat]', tr); b.innerHTML = vd.paused ? BIEU.phat : BIEU.dung; b.setAttribute('aria-label', vd.paused ? 'Phát' : 'Dừng'); tr.classList.toggle('dung', vd.paused); }
-    vd.addEventListener('play', function () { var c = $('.man-cho', tr); if (c) c.remove(); var h = $('.man-het', tr); if (h) h.remove(); nutPhat(); cancelAnimationFrame(raf); cuoi = 0; raf = requestAnimationFrame(vong); if (!daMo) { daMo = true; R.luot = (+R.luot || 0) + 1; } });
+    vd.addEventListener('play', function () { var c = $('.man-cho', tr); if (c) c.remove(); var h = $('.man-het', tr); if (h) h.remove(); nutPhat(); cancelAnimationFrame(raf); cuoi = 0; raf = requestAnimationFrame(vong); if (!daMo) { daMo = true; R.luot = (+R.luot || 0) + 1; lanNay = batDauLanHoc(R, vd.currentTime); } });
     vd.addEventListener('pause', function () { nutPhat(); ve(); ghi(true); });
     // chặn tua tới phần chưa xem (mọi đường: thanh thời gian, phím, công cụ trình duyệt)
     vd.addEventListener('seeking', function () { if (vd.currentTime > R.moc + 1) { vd.currentTime = R.moc; baoNho(tr, 'Chỉ tua lại được phần đã xem'); } });
@@ -750,7 +763,7 @@
     vd.addEventListener('ratechange', function () { if (vd.playbackRate > TOC_MAX) vd.playbackRate = TOC_MAX; });
     vd.addEventListener('volumechange', function () { if (oAm) oAm.value = vd.muted ? 0 : vd.volume; });
     vd.addEventListener('ended', function () {
-      R.moc = Math.max(R.moc, tong); danhDauXem(); R.vi_tri = 0; luu(); nutPhat();
+      R.moc = Math.max(R.moc, tong); if (lanNay) { lanNay.het = true; lanNay.toi = Math.round(tong); } danhDauXem(); R.vi_tri = 0; luu(); nutPhat();
       var m = document.createElement('div'); m.className = 'man-het';
       m.innerHTML = '<div><b>Đã xem hết bài</b><div class="hang"><button type="button" data-l="lai">↺ Xem lại</button><button type="button" class="chinh" data-l="hoi">Câu hỏi nhanh ↓</button></div></div>';
       san.appendChild(m);
@@ -1154,7 +1167,7 @@
     main.innerHTML =
       '<nav class="duong-dan" aria-label="Đang ở"><a href="#/">Khoá học</a><span>›</span><span>Buổi ' + b.so + ' · ' + e(b.ten) + '</span><span>›</span><span>Bài ' + (x.i + 1) + '</span></nav>' +
       '<header class="dau-bai co-so"><span class="so-bai" aria-hidden="true">' + b.so + '.' + (x.i + 1) + '</span><span class="nhan">Buổi ' + hai(b.so) + ' · Bài ' + (x.i + 1) + ' / ' + b.bai.length + '</span><h1>' + nghieng(bai.ten) + '</h1>' +
-      '<div class="meta"><span>Video ' + phut(tongGiay) + '</span><span>Đọc khoảng ' + bai.phut + ' phút</span><span>' + bai.hoi_nhanh.length + ' câu hỏi nhanh</span>' + (baiXong(id) ? '<span class="xong-bai">✓ Đã hoàn thành</span>' : '') + '</div></header>' +
+      '<div class="meta"><span>Video ' + phut(tongGiay) + '</span><span>Đọc khoảng ' + bai.phut + ' phút</span><span>' + bai.hoi_nhanh.length + ' câu hỏi nhanh</span>' + (dsLanHoc(D.bai[id]).length ? '<span title="Mỗi lần mở bài và bấm phát được ghi thành 1 lần học">Đã học ' + dsLanHoc(D.bai[id]).length + ' lần</span>' : '') + (baiXong(id) ? '<span class="xong-bai">✓ Đã hoàn thành</span>' : '') + '</div></header>' +
       '<div class="bai-luoi">' +
         '<div class="bai-tren"><section class="muc-tieu"><h2>Xem xong, bạn sẽ</h2><ul>' + bai.muc_tieu.map(function (m) { return '<li>' + e(m) + '</li>'; }).join('') + '</ul></section>' +
         '<div class="td-kn" style="margin-top:16px"><div class="td"><span>Tư duy</span><p>' + e(bai.tu_duy) + '</p></div><div class="kn"><span>Kỹ năng</span><p>' + e(bai.ky_nang) + '</p></div></div></div>' +
@@ -1284,6 +1297,7 @@
       kt.lich.push({ bd: new Date(dg.bd).toISOString(), giay: giay, dung: d, tong: tongCau, roi: +dg.roi || 0, tu_nop: tuNop || '', qua_nhanh: giay < tongCau * QC.giay_moi_cau_toi_thieu, su_kien: dg.su_kien });
       kt.tra = dg.tra; kt.dung = d; kt.tot = Math.max(+kt.tot || 0, d); kt.lan = (+kt.lan || 0) + 1; kt.dat = !!kt.dat || d >= can; kt.nop = true; delete kt.dang;
       luu(); veMucLuc('kt-' + bid); veTN();
+      if (window.KHOA_NHIP) window.KHOA_NHIP('nop-bai');
       sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
     function veKetQua() {
@@ -1316,6 +1330,7 @@
         try { var tm = document.documentElement.requestFullscreen && document.documentElement.requestFullscreen(); if (tm && tm.catch) tm.catch(function () {}); } catch (x) {}
         kt.dang = { bd: Date.now(), thu_tu: tron(tongCau), pa: b.kiem_tra.map(function (q) { return tron(q.chon.length); }), tra: {}, roi: 0, su_kien: [], cam_ket: true };
         vuaBatDau = true; luu(); veTN(); sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        if (window.KHOA_NHIP) window.KHOA_NHIP('bat-dau-thi'); // trang Quản trị thấy ngay "Đang thi"
       } else if (l === 'nop') {
         var chua = tongCau - Object.keys(kt.dang.tra).length;
         if (chua > 0 && !hoiLaiNop) { hoiLaiNop = true; $('.kt-bao', sec).textContent = 'Còn ' + chua + ' câu chưa chọn. Bấm Nộp bài lần nữa để nộp luôn.'; return; }
@@ -1410,7 +1425,9 @@
       bai.push({ id: x.bai.id, ten: 'Bài ' + x.b.so + '.' + (x.i + 1) + ' · ' + x.bai.ten, phut_xem: Math.round((+r.giay || 0) / 6) / 10,
         da_xem_toi: dai ? Math.min(100, Math.round((+r.moc || 0) / dai * 100)) : null, xem_het: !!r.xem, hoan_thanh: !!r.xong,
         hoi_nhanh: (D.hnl[x.bai.id] && D.hnl[x.bai.id].lan1 ? D.hnl[x.bai.id].lan1.dung + '/' + D.hnl[x.bai.id].lan1.tong + ' (lần đầu)' : 'chưa nộp'), luot: +r.luot || 0,
-        phut_trang: Math.round((+r.tg_trang || 0) / 6) / 10, mo_khoa: !chuaMo(x.bai.id) });
+        phut_trang: Math.round((+r.tg_trang || 0) / 6) / 10, mo_khoa: !chuaMo(x.bai.id),
+        so_lan_hoc: dsLanHoc(r).length,
+        lan_hoc: dsLanHoc(r).map(function (l, k) { var d = new Date(l.bd); return 'L' + (k + 1) + ' ' + hai(d.getDate()) + '/' + hai(d.getMonth() + 1) + ' ' + hai(d.getHours()) + ':' + hai(d.getMinutes()) + ' xem ' + phutGiay(l.giay) + ' (' + phut(l.tu) + '→' + phut(l.toi) + (l.het ? ', hết' : '') + ')'; }).join(' · ') });
     });
     var kt = {};
     var tongDiem = 0, soBuoi = 0;
@@ -1436,7 +1453,26 @@
     // trang quản trị (quan-tri.js): tóm tắt + điểm từng buổi trên bài làm tải từ máy chủ; dùng chung khoá học, công thức điểm, quy chế
     tomTatCua: function (Dx) { return voiDuLieu(Dx, tomTat); },
     diemCua: function (Dx, bid) { return voiDuLieu(Dx, function () { var b = timBuoi(bid); return b ? diemBuoi(b) : null; }); },
-    khoa: K, ds: DS, qc: QC, video: VIDEO_BAI, e: e, nghieng: nghieng, phutGiay: phutGiay, veLai: function () { dinhTuyen(); },
+    khoa: K, ds: DS, qc: QC, video: VIDEO_BAI, e: e, nghieng: nghieng, phutGiay: phutGiay, phut: phut, dsLanHoc: dsLanHoc, veLai: function () { dinhTuyen(); },
+    // nhịp hoạt động (dang-nhap.js gửi máy chủ mỗi 60 giây): đang ở trang nào, đang làm gì — để trang Quản trị xem trực tiếp
+    hoatDong: function () {
+      var h = (location.hash || '#/').slice(1) || '/', m, o = { ma: h, trang: 'Trang khoá học', viec: 'doc', chi_tiet: '', tien_do: demTien().pct };
+      if ((m = h.match(/^\/bai\/([\w-]+)/))) {
+        var x = timBai(m[1]); if (x) o.trang = 'Bài ' + x.b.so + '.' + (x.i + 1) + ' · ' + x.bai.ten;
+        var v = document.querySelector('.trinh-video video');
+        if (v && !v.paused && !v.ended) { o.viec = 'xem-video'; o.chi_tiet = 'đang xem ' + phut(v.currentTime || 0) + ' / ' + phut(v.duration || (VIDEO_BAI[m[1]] || {}).dai || 0); }
+        else if (v && v.currentTime > 0) o.chi_tiet = 'video dừng ở ' + phut(v.currentTime);
+      } else if ((m = h.match(/^\/kiem-tra\/(\w+)/))) {
+        var b = timBuoi(m[1]), k = D.kt[m[1]]; o.trang = 'Kiểm tra Buổi ' + (b ? b.so : '?');
+        if (b && k && k.dang) {
+          var con = Math.max(0, QC.kt_phut * 60 - Math.round((Date.now() - k.dang.bd) / 1000));
+          o.viec = 'dang-thi'; o.chi_tiet = 'lần ' + ((+k.lan || 0) + 1) + ' · đã chọn ' + Object.keys(k.dang.tra || {}).length + '/' + b.kiem_tra.length + ' câu · còn ' + phutGiay(con) + (k.dang.roi ? ' · rời trang ' + k.dang.roi + ' lần' : '');
+        } else if (b && k && k.nop) o.chi_tiet = 'đã nộp · ' + (k.tot || 0) + '/' + b.kiem_tra.length + ' câu' + (k.dat ? ' · đạt' : ' · chưa đạt');
+      } else if (h === '/thuat-ngu') o.trang = 'Bảng thuật ngữ';
+      else if (/^\/quan-tri/.test(h)) o.trang = 'Trang Quản trị';
+      else if (/^\/ghi\//.test(h)) o.trang = 'Ghi chép buổi học';
+      return o;
+    },
     // dữ liệu tải về từ máy chủ sau khi đăng nhập: gộp, lưu, vẽ lại trang đang mở
     ganDuLieu: function (moi) { if (moi && typeof moi === 'object') { gop(D, moi); ['bai', 'kt', 'tl', 'ck', 'kiem', 'ghi', 'hn', 'hnl', 'chung'].forEach(function (k) { D[k] = D[k] || {}; }); luu(); dinhTuyen(); } },
     datTen: function (ten) { if (ten && !D.chung.ten) { D.chung.ten = ten; luu(); } }

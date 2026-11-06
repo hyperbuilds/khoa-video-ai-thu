@@ -6,6 +6,11 @@
 // NHỚ ĐĂNG NHẬP (06/11, user: "cho web nhớ mật khẩu"): đăng nhập Google xong máy chủ cấp PHIÊN 30 ngày (lưu localStorage 'khoa-phien');
 //   lần sau mở web là vào thẳng, không hiện màn đăng nhập. Phiên tự gia hạn khi còn dưới 7 ngày. Đăng xuất = xoá phiên trên máy này.
 // QUẢN TRỊ: máy chủ báo quan_tri → hiện nút "Quản trị" trên thanh đầu (trang do quan-tri.js vẽ; máy chủ kiểm quyền mỗi lần gọi).
+// 06/11 tối (user: "thêm tích chọn nhớ đăng nhập hay không, thiết kế lại ui đăng nhập với slogan đẹp hơn" + "xem ai đang đăng nhập, ai đang làm bài, đến đâu"):
+//   - ô "Nhớ đăng nhập trên máy này" (mặc định tích, lưu 'khoa-nho-dn'): bỏ tích = phiên chỉ sống tới khi đóng trình duyệt (sessionStorage)
+//     + tắt tự đăng nhập Google lần sau (máy dùng chung).
+//   - NHỊP HOẠT ĐỘNG: đang mở trang thì mỗi 60 giây (và lúc đổi trang / rời tab / quay lại / đóng trang) gửi máy chủ đang ở đâu, đang làm gì
+//     (KHOA_APP.hoatDong: xem video, đang thi — đã chọn mấy câu, còn bao lâu…) + bao lâu không thao tác → trang Quản trị xem trực tiếp.
 (function () {
   'use strict';
   var C = window.CAU_HINH || {}, APP = window.KHOA_APP;
@@ -16,25 +21,44 @@
   var e = function (s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); };
 
   // ---------- phiên nhớ đăng nhập
-  function docPhien() { try { var p = JSON.parse(localStorage.getItem(KHO_PHIEN) || 'null'); if (p && p.phien && +p.het > Date.now() + 60000 && p.email) return p; } catch (x) {} return null; }
+  function nhoDN() { try { return localStorage.getItem('khoa-nho-dn') !== '0'; } catch (x) { return true; } }
+  function kho() { try { return nhoDN() ? localStorage : sessionStorage; } catch (x) { return null; } }
+  function docPhien() {
+    var ds = []; try { ds = [localStorage, sessionStorage]; } catch (x) {}
+    for (var i = 0; i < ds.length; i++) { try { var p = JSON.parse(ds[i].getItem(KHO_PHIEN) || 'null'); if (p && p.phien && +p.het > Date.now() + 60000 && p.email) return p; } catch (x2) {} }
+    return null;
+  }
   function luuPhien(kq) {
     if (!kq || !kq.phien || !nguoi) return; phien = kq.phien;
-    try { localStorage.setItem(KHO_PHIEN, JSON.stringify({ phien: kq.phien, het: kq.het, email: nguoi.email, ten: nguoi.ten, anh: nguoi.anh, quan_tri: !!kq.quan_tri })); } catch (x) {}
+    var k = kho(); if (!k) return;
+    try { boPhienKho(); k.setItem(KHO_PHIEN, JSON.stringify({ phien: kq.phien, het: kq.het, email: nguoi.email, ten: nguoi.ten, anh: nguoi.anh, quan_tri: !!kq.quan_tri })); } catch (x) {}
   }
-  function boPhien() { phien = null; try { localStorage.removeItem(KHO_PHIEN); } catch (x) {} }
+  function boPhienKho() { try { localStorage.removeItem(KHO_PHIEN); } catch (x) {} try { sessionStorage.removeItem(KHO_PHIEN); } catch (x2) {} }
+  function boPhien() { phien = null; boPhienKho(); }
 
   // ---------- màn đăng nhập (chỉ hiện khi chưa có phiên còn hạn)
   function moManDangNhap(loiNhan) {
     if (!man) {
       man = document.createElement('div');
       man.className = 'man-dang-nhap';
-      man.innerHTML = '<div class="mdn-the" role="dialog" aria-modal="true" aria-labelledby="mdn-tieu">' +
-        '<svg class="mdn-logo" viewBox="0 0 363.18 81.52" aria-label="Hecatech"><use href="#hct-logo"/></svg>' +
-        '<span class="nhan">Khoá nền tảng</span><h1 id="mdn-tieu">Làm video bán hàng <em class="ng">bằng AI</em></h1>' +
-        '<p>Đăng nhập bằng email công ty <b>@' + e(MIEN) + '</b> để bắt đầu. Tiến độ xem, câu trả lời và điểm kiểm tra được lưu theo tài khoản — học ở máy nào cũng xem tiếp được, người hướng dẫn theo dõi được tiến độ của bạn.</p>' +
-        '<div id="mdn-nut" class="mdn-nut"></div><p class="mdn-bao" role="alert" aria-live="polite"></p>' +
-        '<p class="mdn-nho">Máy này sẽ nhớ đăng nhập ' + 30 + ' ngày.</p></div>';
+      var soBuoi = (APP.khoa && APP.khoa.buoi && APP.khoa.buoi.length) || 5;
+      var loi = function (so, tieu, chu) { return '<li><i aria-hidden="true">' + so + '</i><span><b>' + tieu + '</b>' + chu + '</span></li>'; };
+      man.innerHTML = '<div class="mdn-khung" role="dialog" aria-modal="true" aria-labelledby="mdn-tieu">' +
+        '<section class="mdn-ben" aria-label="Giới thiệu khoá học">' +
+          '<svg class="mdn-logo" viewBox="0 0 363.18 81.52" aria-label="Hecatech"><use href="#hct-logo"/></svg>' +
+          '<span class="mdn-nhan">Khoá nền tảng · Video AI</span>' +
+          '<p class="mdn-slogan">Bạn cầm lái.<br><em>AI tăng tốc.</em></p>' +
+          '<p class="mdn-phu">Học cách làm video bán hàng cùng Agent — Agent làm phần lặp lại, bạn giữ phần quyết định: ý tưởng, duyệt kịch bản, chốt video.</p>' +
+          '<ul class="mdn-loi">' + loi('01', 'Nhanh hơn', 'Ghép cảnh, đọc giọng, chèn chữ để máy làm.') + loi('02', 'Chuẩn hơn', 'Kịch bản theo công thức của những video đã bán được.') + loi('03', 'Giỏi dần mỗi ngày', 'Mỗi video làm xong là một bài học cho video sau.') + '</ul>' +
+          '<p class="mdn-chan">' + soBuoi + ' buổi · học theo thứ tự · kiểm tra cuối mỗi buổi</p></section>' +
+        '<section class="mdn-the"><h1 id="mdn-tieu">Đăng nhập để vào học</h1>' +
+          '<p>Dùng email công ty <b>@' + e(MIEN) + '</b>. Tiến độ, câu trả lời và điểm được lưu theo tài khoản — học ở máy nào cũng xem tiếp được.</p>' +
+          '<div id="mdn-nut" class="mdn-nut"></div>' +
+          '<label class="mdn-nho"><input type="checkbox"' + (nhoDN() ? ' checked' : '') + '><span><b>Nhớ đăng nhập trên máy này</b><small>30 ngày không phải đăng nhập lại · bỏ tích nếu đang dùng máy chung</small></span></label>' +
+          '<p class="mdn-bao" role="alert" aria-live="polite"></p>' +
+          '<p class="mdn-rieng">Người hướng dẫn theo dõi được tiến độ học của bạn để hỗ trợ kịp thời.</p></section></div>';
       bao = man.querySelector('.mdn-bao');
+      man.querySelector('.mdn-nho input').addEventListener('change', function (ev) { try { localStorage.setItem('khoa-nho-dn', ev.target.checked ? '1' : '0'); } catch (x) {} });
     }
     if (!man.parentNode) document.body.appendChild(man);
     document.documentElement.classList.add('chua-dang-nhap');
@@ -45,13 +69,14 @@
     if (gisNap) { veNut(); return; } gisNap = true;
     var s = document.createElement('script'); s.src = 'https://accounts.google.com/gsi/client'; s.async = true; s.defer = true;
     s.onload = function () {
-      google.accounts.id.initialize({ client_id: C.google_client_id, callback: nhanVe, auto_select: true, hd: MIEN || undefined, itp_support: true, use_fedcm_for_prompt: true });
+      google.accounts.id.initialize({ client_id: C.google_client_id, callback: nhanVe, auto_select: nhoDN(), hd: MIEN || undefined, itp_support: true, use_fedcm_for_prompt: true });
       veNut(); google.accounts.id.prompt();
     };
     s.onerror = function () { if (bao) bao.textContent = 'Không tải được nút đăng nhập Google. Kiểm tra mạng rồi tải lại trang.'; };
     document.head.appendChild(s);
   }
-  function veNut() { var o = document.getElementById('mdn-nut'); if (o && window.google && google.accounts && !o.childElementCount) google.accounts.id.renderButton(o, { theme: 'outline', size: 'large', shape: 'pill', text: 'signin_with', locale: 'vi', logo_alignment: 'left' }); }
+  // nút Google có bề rộng cố định (mặc định ~400) → đo khung trước, điện thoại hẹp không bị tràn
+  function veNut() { var o = document.getElementById('mdn-nut'); if (o && window.google && google.accounts && !o.childElementCount) google.accounts.id.renderButton(o, { theme: 'outline', size: 'large', shape: 'pill', text: 'signin_with', locale: 'vi', logo_alignment: 'left', width: Math.max(200, Math.min(400, Math.floor(o.clientWidth || 320))) }); }
 
   function giaiVe(t) { // đọc phần giữa của vé (chỉ để hiện tên; máy chủ mới là nơi kiểm thật)
     var p = t.split('.')[1].replace(/-/g, '+').replace(/_/g, '/'); while (p.length % 4) p += '=';
@@ -67,6 +92,7 @@
       return;
     }
     ve = r.credential; phien = null; // vé mới: lần gọi tới đi bằng vé Google, máy chủ trả phiên mới
+    if (!nhoDN()) { try { google.accounts.id.disableAutoSelect(); } catch (x3) {} } // máy chung: lần sau không tự đăng nhập
     nguoi = { email: email, ten: p.name || email, anh: p.picture || '' };
     if (!daVao || !daTai) vaoHoc(); else { dongMan(); if (guiLai) { guiLai = false; gui(); } }
   }
@@ -89,7 +115,7 @@
     APP.datTen(nguoi.ten);
     veChip('dang-tai');
     goi('tai').then(function (kq) {
-      if (kq && kq.ok) { daTai = true; if (kq.du_lieu) APP.ganDuLieu(kq.du_lieu); veChip('da-luu'); if (chuaGui || guiLai) { guiLai = false; gui(); } }
+      if (kq && kq.ok) { daTai = true; if (kq.du_lieu) APP.ganDuLieu(kq.du_lieu); veChip('da-luu'); if (chuaGui || guiLai) { guiLai = false; gui(); } setTimeout(function () { guiNhip('vao'); }, 1500); }
       else if (!(kq && (kq.loi === 'phien' || kq.loi === 've'))) veChip('loi');
     }).catch(function () { veChip('loi'); });
   }
@@ -144,6 +170,27 @@
     try { google.accounts.id.disableAutoSelect(); } catch (x) {}
     setTimeout(function () { location.hash = '#/'; location.reload(); }, 600);
   }
+  // ---------- nhịp hoạt động (trang Quản trị xem trực tiếp ai đang học, đang ở đâu, đang làm gì)
+  var lanThaoTac = Date.now(), lanNhip = 0, henNhip = 0;
+  ['pointermove', 'pointerdown', 'keydown', 'wheel', 'touchstart', 'scroll'].forEach(function (t) { window.addEventListener(t, function () { lanThaoTac = Date.now(); }, { passive: true, capture: true }); });
+  function nhip(lyDo) {
+    var hd = {}; try { hd = (APP.hoatDong && APP.hoatDong()) || {}; } catch (x) {}
+    var an = document.visibilityState !== 'visible', im = Math.round((Date.now() - lanThaoTac) / 1000);
+    var viec = lyDo === 'roi-trang' ? 'roi-trang' : an ? 'roi-tab' : (hd.viec === 'doc' && im >= 180 ? 'ngoi-im' : hd.viec || 'doc');
+    return { trang: hd.trang || '', ma: hd.ma || '', viec: viec, chi_tiet: hd.chi_tiet || '', tien_do: hd.tien_do, im: im, ly_do: lyDo };
+  }
+  function guiNhip(lyDo) {
+    if (!daTai || (!ve && !phien)) return;
+    if (lyDo === 'roi-trang') { try { navigator.sendBeacon(C.may_chu, new Blob([JSON.stringify(Object.assign({ loai: 'nhip', hd: nhip(lyDo) }, phien ? { phien: phien } : { token: ve }))], { type: 'text/plain' })); } catch (x) {} return; }
+    var bay = Date.now(); if (bay - lanNhip < 8000 && lyDo !== 'an') { clearTimeout(henNhip); henNhip = setTimeout(function () { guiNhip(lyDo); }, 8000 - (bay - lanNhip)); return; }
+    lanNhip = bay; goi('nhip', { hd: nhip(lyDo) }).catch(function () {});
+  }
+  setInterval(function () { if (document.visibilityState === 'visible') guiNhip('dinh-ky'); }, 60000);
+  document.addEventListener('visibilitychange', function () { guiNhip(document.visibilityState === 'visible' ? 'quay-lai' : 'an'); });
+  window.addEventListener('hashchange', function () { setTimeout(function () { guiNhip('doi-trang'); }, 400); });
+  window.addEventListener('pagehide', function () { guiNhip('roi-trang'); });
+  document.addEventListener('play', function () { guiNhip('xem'); }, true); document.addEventListener('pause', function () { guiNhip('dung'); }, true);
+  window.KHOA_NHIP = guiNhip; // ung-dung.js gọi lúc bắt đầu / nộp bài thi
   window.KHOA_MAY_CHU = { goi: goi, laQuanTri: function () { return quanTri; }, daVao: function () { return daVao; }, nguoi: function () { return nguoi; } };
 
   // ---------- bắt đầu: có phiên còn hạn → vào thẳng; chưa có → màn đăng nhập Google
