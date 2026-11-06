@@ -6,5 +6,7 @@ window.CAU_HINH = {
   // Địa chỉ Apps Script web app đã triển khai (kết thúc bằng /exec) — mã máy chủ ở may-chu-du-lieu.gs
   may_chu: 'https://script.google.com/macros/s/AKfycbxffAsQGlKdglINdQt8UDl6ZCL0C4CJVOan-aQk-6gJQZO1KsEmQn-GVnVtsfTbMyX-/exec',
   // Chỉ nhận email thuộc tên miền này
-  mien: 'hecatech.vn'
+  mien: 'hecatech.vn',
+  // Google Sheet chứa dữ liệu (chỉ hiện nút mở ở trang Quản trị; ai mở được Sheet do quyền chia sẻ của Google quyết định)
+  sheet: 'https://docs.google.com/spreadsheets/d/1jKx4rV79qk72PmZgTQq_DOGn_uCsNVs4zKfFpll6l94/edit'
 };

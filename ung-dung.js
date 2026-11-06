@@ -1220,13 +1220,13 @@
     function veMoDau() {
       sec.innerHTML = H2 + '<div class="kt-quy-che"><h3>Quy chế làm bài</h3><ul>' +
         '<li><b>' + tongCau + ' câu</b> trắc nghiệm trong <b>' + QC.kt_phut + ' phút</b>. Hết giờ bài tự nộp.</li>' +
-        '<li>Đạt từ <b>' + can + '/' + tongCau + '</b> câu. Được làm tối đa <b>' + QC.kt_lan + ' lần</b>, giữ điểm cao nhất.</li>' +
+        '<li>Đạt từ <b>' + can + '/' + tongCau + '</b> câu. Được làm tối đa <b>' + luotToiDa() + ' lần</b>' + (+kt.them ? ' (đã được mở thêm ' + kt.them + ' lượt)' : '') + ', giữ điểm cao nhất.</li>' +
         '<li>Bài làm ở <b>chế độ toàn màn hình</b>. Đang làm thì <b>không rời trang</b>: chuyển tab, thoát toàn màn hình hay mở ứng dụng khác đều được ghi lại và báo cho người chấm.</li>' +
         '<li>Thứ tự câu và đáp án được xáo. Điểm hiện ngay khi nộp; đáp án đúng hiện khi bạn đã đạt hoặc dùng hết lượt. Hai lượt cách nhau ít nhất ' + QC.kt_cach_phut + ' phút.</li>' +
         '<li>Không chép / dán trong lúc làm.</li></ul>' +
         '<label class="kt-cam-ket"><input type="checkbox" data-kt="cam-ket"><span>Tôi cam kết tự làm bài, không nhờ người khác hay công cụ AI trả lời hộ.</span></label>' +
         (choLai() > 0 ? '<p class="tom-tat thieu">Làm lại được sau ' + gioPhut(Date.now() + choLai() * 1000) + ' (cách lượt trước ' + QC.kt_cach_phut + ' phút).</p>' : '') +
-        '<button class="nut chinh to" type="button" data-kt="bat-dau" disabled>Bắt đầu làm bài · lần ' + ((+kt.lan || 0) + 1) + '/' + QC.kt_lan + '</button></div>';
+        '<button class="nut chinh to" type="button" data-kt="bat-dau" disabled>Bắt đầu làm bài · lần ' + ((+kt.lan || 0) + 1) + '/' + luotToiDa() + '</button></div>';
     }
     function veDangLam() {
       var dg = kt.dang;
@@ -1264,7 +1264,9 @@
     var daToanMan = false;
     function batTheoDoi() { document.addEventListener('visibilitychange', onVis); window.addEventListener('blur', onBlur); window.addEventListener('focus', onFocus); document.addEventListener('fullscreenchange', onFs); }
     function thoTheoDoi() { document.removeEventListener('visibilitychange', onVis); window.removeEventListener('blur', onBlur); window.removeEventListener('focus', onFocus); document.removeEventListener('fullscreenchange', onFs); clearInterval(dongHo); dongHo = 0; try { if (document.fullscreenElement) document.exitFullscreen(); } catch (x) {} }
-    function choLai() { var l = kt.lich && kt.lich[kt.lich.length - 1]; if (!l || kt.dat || MO_HET) return 0; return Math.max(0, Math.ceil((new Date(l.bd).getTime() + (+l.giay || 0) * 1000 + QC.kt_cach_phut * 60000 - Date.now()) / 1000)); }
+    // quản trị cho thêm lượt (06/11): kt.them = số lượt thêm, kt.cap_luc = lúc cho — lượt cho thêm sau lần làm cuối thì không phải chờ
+    function luotToiDa() { return QC.kt_lan + (+kt.them || 0); }
+    function choLai() { var l = kt.lich && kt.lich[kt.lich.length - 1]; if (!l || kt.dat || MO_HET) return 0; var xongLuc = new Date(l.bd).getTime() + (+l.giay || 0) * 1000; if (+kt.cap_luc > xongLuc) return 0; return Math.max(0, Math.ceil((xongLuc + QC.kt_cach_phut * 60000 - Date.now()) / 1000)); }
     function gioPhut(ms) { var d = new Date(ms); return ('0' + d.getHours()).slice(-2) + ':' + ('0' + d.getMinutes()).slice(-2); }
     // rời sang trang khác trong web khi đang làm (vd mở lại bài học để tra) cũng tính 1 lần rời; bài vẫn chạy giờ
     donKT = function () { thoTheoDoi(); if (kt.dang) { kt.dang.roi = (+kt.dang.roi || 0) + 1; kt.dang.su_kien.push({ luc: new Date().toISOString(), loai: 'roi-sang-trang-khac' }); luu(); } };
@@ -1285,10 +1287,10 @@
       sec.scrollIntoView({ behavior: 'smooth', block: 'start' });
     }
     function veKetQua() {
-      var p = diemBuoi(b), cuoi = kt.lich && kt.lich[kt.lich.length - 1], conLuot = (+kt.lan || 0) < QC.kt_lan;
+      var p = diemBuoi(b), cuoi = kt.lich && kt.lich[kt.lich.length - 1], conLuot = (+kt.lan || 0) < luotToiDa();
       var lyDo = cuoi && cuoi.tu_nop === 'het-gio' ? ' · hết giờ, bài tự nộp' : '', hienDap = kt.dat || !conLuot;
       sec.innerHTML = H2 + '<div class="diem ' + (kt.dat ? 'dat' : 'chua') + '"><span class="so">' + kt.dung + '/' + tongCau + '</span><p><b>' + (kt.dat ? 'Đạt — đã mở buổi tiếp theo.' : 'Chưa đạt — cần ' + can + '/' + tongCau + '.') + '</b><br>' +
-        (cuoi ? 'Lần ' + kt.lan + '/' + QC.kt_lan + ': làm trong ' + phutGiay(cuoi.giay) + ', rời trang ' + cuoi.roi + ' lần' + lyDo + '.' : '') + (kt.lan > 1 ? ' Điểm giữ lại: ' + kt.tot + '/' + tongCau + ' (cao nhất).' : '') + '</p></div>' +
+        (cuoi ? 'Lần ' + kt.lan + '/' + luotToiDa() + ': làm trong ' + phutGiay(cuoi.giay) + ', rời trang ' + cuoi.roi + ' lần' + lyDo + '.' : '') + (kt.lan > 1 ? ' Điểm giữ lại: ' + kt.tot + '/' + tongCau + ' (cao nhất).' : '') + '</p></div>' +
         '<div class="diem-buoi"><h3>Điểm buổi ' + b.so + ': <span class="ng">' + p.tong + '</span>/100 · ' + e(p.loai) + '</h3><table class="bang-tl"><tbody>' +
         '<tr><td>Kiểm tra trắc nghiệm (điểm cao nhất)</td><td>' + p.kt + ' / 70</td></tr>' +
         '<tr><td>Chuyên cần — thời gian xem video thật các bài trong buổi</td><td>' + p.hoc + ' / 20</td></tr>' +
@@ -1299,16 +1301,16 @@
           return '<fieldset class="cau" data-k="' + k + '"><legend><small>Câu ' + (k + 1) + ' · ' + (tl === q.dap ? 'đúng' : typeof tl === 'number' ? 'sai' : 'chưa chọn') + '</small>' + e(q.hoi) + '</legend>' +
             q.chon.map(function (c, j) { return '<label class="' + (hienDap && j === q.dap ? 'dung' : j === tl ? (tl === q.dap ? 'dung' : 'sai') : '') + '"><input type="radio" disabled' + (j === tl ? ' checked' : '') + '><span>' + e(c) + '</span></label>'; }).join('') + '</fieldset>';
         }).join('') + '</div>' +
-        (hienDap ? '' : '<p class="tom-tat">Đáp án đúng sẽ hiện khi bạn đạt hoặc đã dùng hết ' + QC.kt_lan + ' lượt.</p>') +
-        '<div class="hang-nut">' + (!kt.dat && conLuot ? '<button class="nut chinh" type="button" data-kt="lam-lai">Làm lại · lần ' + ((+kt.lan || 0) + 1) + '/' + QC.kt_lan + '</button>' : '') +
-        (!kt.dat && !conLuot ? '<p class="tom-tat thieu">Đã hết lượt làm bài. Báo lead để được mở thêm lượt.</p>' : '') + '</div>';
+        (hienDap ? '' : '<p class="tom-tat">Đáp án đúng sẽ hiện khi bạn đạt hoặc đã dùng hết ' + luotToiDa() + ' lượt.</p>') +
+        '<div class="hang-nut">' + (!kt.dat && conLuot ? '<button class="nut chinh" type="button" data-kt="lam-lai">Làm lại · lần ' + ((+kt.lan || 0) + 1) + '/' + luotToiDa() + '</button>' : '') +
+        (!kt.dat && !conLuot ? '<p class="tom-tat thieu">Đã hết lượt làm bài. Báo người quản lý khoá học để được mở thêm lượt.</p>' : '') + '</div>';
     }
     sec.addEventListener('click', function (ev) {
       var n = ev.target.closest('[data-kt]'); if (!n) return;
       var l = n.getAttribute('data-kt');
       if (l === 'lam-lai') { veMoDau(); var ck0 = $('[data-kt=cam-ket]', sec); if (ck0) ck0.addEventListener('change', function () { $('[data-kt=bat-dau]', sec).disabled = !ck0.checked || choLai() > 0; }); sec.scrollIntoView({ behavior: 'smooth', block: 'start' }); return; }
       if (l === 'bat-dau') {
-        if ((+kt.lan || 0) >= QC.kt_lan && !MO_HET) return;
+        if ((+kt.lan || 0) >= luotToiDa() && !MO_HET) return;
         if (choLai() > 0) return;
         var ck = $('[data-kt=cam-ket]', sec); if (ck && !ck.checked) return;
         try { var tm = document.documentElement.requestFullscreen && document.documentElement.requestFullscreen(); if (tm && tm.catch) tm.catch(function () {}); } catch (x) {}
@@ -1423,9 +1425,18 @@
       diem_tb: soBuoi ? Math.round(tongDiem / soBuoi) : '', phut_trang: Math.round(DS.reduce(function (s, x) { return s + (+((D.bai[x.bai.id] || {}).tg_trang) || 0); }, 0) / 6) / 10,
       bai_xem_het: xemHet + '/' + DS.length, bai_hoan_thanh: xong + '/' + DS.length, phut_xem: Math.round(giay / 6) / 10, kiem_tra: kt, bai: bai };
   }
+  function voiDuLieu(Dx, fn) {
+    var cu = D; D = Dx && typeof Dx === 'object' ? Dx : {};
+    ['bai', 'kt', 'tl', 'ck', 'kiem', 'ghi', 'hn', 'hnl', 'chung'].forEach(function (k) { D[k] = D[k] || {}; });
+    try { return fn(); } finally { D = cu; }
+  }
   window.KHOA_APP = {
     duLieu: function () { return D; },
     tomTat: tomTat,
+    // trang quản trị (quan-tri.js): tóm tắt + điểm từng buổi trên bài làm tải từ máy chủ; dùng chung khoá học, công thức điểm, quy chế
+    tomTatCua: function (Dx) { return voiDuLieu(Dx, tomTat); },
+    diemCua: function (Dx, bid) { return voiDuLieu(Dx, function () { var b = timBuoi(bid); return b ? diemBuoi(b) : null; }); },
+    khoa: K, ds: DS, qc: QC, video: VIDEO_BAI, e: e, nghieng: nghieng, phutGiay: phutGiay, veLai: function () { dinhTuyen(); },
     // dữ liệu tải về từ máy chủ sau khi đăng nhập: gộp, lưu, vẽ lại trang đang mở
     ganDuLieu: function (moi) { if (moi && typeof moi === 'object') { gop(D, moi); ['bai', 'kt', 'tl', 'ck', 'kiem', 'ghi', 'hn', 'hnl', 'chung'].forEach(function (k) { D[k] = D[k] || {}; }); luu(); dinhTuyen(); } },
     datTen: function (ten) { if (ten && !D.chung.ten) { D.chung.ten = ten; luu(); } }
@@ -1438,6 +1449,7 @@
     if (donKT) { var d0 = donKT; donKT = null; d0(); }
     var h = (location.hash || '#/').slice(1), m, dangO = 'tong';
     if ((m = h.match(/^\/ghi\/([\w-]+)/))) { trangGhi(m[1]); return; }
+    if ((m = h.match(/^\/quan-tri(?:\/(.+))?$/)) && window.KHOA_QUAN_TRI) { window.KHOA_QUAN_TRI(main, m[1] ? decodeURIComponent(m[1]) : ''); veMucLuc('qt'); document.documentElement.classList.remove('mo-muc'); window.scrollTo(0, 0); return; }
     if ((m = h.match(/^\/bai\/([\w-]+)/))) { trangBai(m[1]); dangO = m[1]; }
     else if ((m = h.match(/^\/kiem-tra\/(\w+)/))) { trangKiemTra(m[1]); dangO = 'kt-' + m[1]; }
     else if (h === '/thuat-ngu') { trangThuatNgu(); dangO = 'tn'; }
