@@ -115,10 +115,12 @@
         cotDau('ten', 'Học viên') + cotDau('tt', 'Trạng thái') + cotDau('bo_phan', 'Bộ phận') + cotDau('tien_do', 'Tiến độ') + cotDau('phut', 'Phút xem') + cotDau('diem_tb', 'Điểm TB') +
         K.buoi.slice(0, soBuoi).map(function (b, i) { return cotDau('b' + i, 'Buổi ' + b.so); }).join('') + cotDau('lan_cuoi', 'Lần cuối') +
       '</tr></thead><tbody></tbody></table></div><p class="qt-ghi">Bấm vào một dòng để xem chi tiết bài làm, các lượt thi và cho thêm lượt thi.</p>' +
-      '<section class="qt-muc qt-ql" id="qt-ql" aria-labelledby="qt-ql-tieu"></section></div>';
+      '<section class="qt-muc qt-ql" id="qt-ql" aria-labelledby="qt-ql-tieu"></section>' +
+      (window.KHOA_AGENT ? '<section class="qt-muc ag-qt" id="qt-agent" aria-labelledby="qt-ag-tieu"></section>' : '') + '</div>';
     veDong(main, soBuoi);
     ganNut(main);
     veQuanTri(main);
+    if (window.KHOA_AGENT) window.KHOA_AGENT.veQuanTri($('#qt-agent', main)); // 07/11: khung Agent khoá học (agent.js)
     veSong(main);
     capNhatSong(main);
     $$('[data-cot]', main).forEach(function (th) { th.addEventListener('click', function () { var c = th.getAttribute('data-cot'); sap = { cot: c, nguoc: sap.cot === c ? !sap.nguoc : c !== 'ten' && c !== 'bo_phan' }; veTong(main); }); });

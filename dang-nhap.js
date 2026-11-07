@@ -141,6 +141,7 @@
     return fetch(C.may_chu, { method: 'POST', body: JSON.stringify(than) }).then(function (r) { return r.json(); }).then(function (kq) {
       if (kq && kq.phien) luuPhien(kq);
       if (kq && typeof kq.quan_tri === 'boolean') datQuanTri(kq.quan_tri);
+      if (kq && kq.agent && window.KHOA_AGENT) window.KHOA_AGENT.dat(kq.agent); // 07/11: máy chủ báo Agent bật / tắt → hiện / ẩn nút "Hỏi Agent"
       if (kq && (kq.loi === 'phien' || kq.loi === 've')) hetPhien();
       return kq;
     });
