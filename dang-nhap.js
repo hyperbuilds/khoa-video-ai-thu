@@ -195,12 +195,13 @@
   }
   // nút Quản trị (chỉ email quản trị — máy chủ vẫn kiểm quyền ở mọi lần gọi trang quản trị)
   function datQuanTri(b) {
-    quanTri = !!b;
+    var cu = quanTri; quanTri = !!b;
     var dau = document.querySelector('.dau'); if (!dau) return;
     var n = dau.querySelector('#nut-quan-tri');
     if (quanTri && !n) { n = document.createElement('a'); n.className = 'nut'; n.id = 'nut-quan-tri'; n.href = '#/quan-tri'; n.textContent = 'Quản trị'; dau.insertBefore(n, dau.querySelector('.tai-khoan') || dau.querySelector('#nut-gop-y')); }
     else if (!quanTri && n) n.remove();
-    if (/^#\/quan-tri/.test(location.hash) && APP.veLai) APP.veLai();
+    // 07/11: chỉ vẽ lại trang Quản trị khi quyền THẬT SỰ đổi (trước đây mọi lần máy chủ trả lời đều vẽ lại cả trang → giật, mất hiệu ứng hiện mượt)
+    if (cu !== quanTri && /^#\/quan-tri/.test(location.hash) && APP.veLai) APP.veLai();
   }
   function dangXuat() {
     if (hen) { clearTimeout(hen); hen = 0; gui(); }

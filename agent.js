@@ -238,6 +238,13 @@
     $$('.ag-than', khung).forEach(function (o) { o.hidden = o.getAttribute('data-o') !== t; });
     if (t === 'hoi') veDs(); else veTL();
   }
+  // 07/11: chờ có điểm nhìn (lá tự vẽ nhỏ) + các bước trượt lên lần lượt + dòng xương lấp lánh — thay 3 chấm
+  function chuBuoc(buoc, T) {
+    return '<span class="cho-chu" aria-hidden="true">' + buoc.map(function (b, i) {
+      return '<span class="' + (i === buoc.length - 1 ? 'cuoi' : '') + '" style="animation-delay:' + (i * T).toFixed(2) + 's;animation-duration:' + T + 's">' + e(b) + '</span>';
+    }).join('') + '</span>';
+  }
+  var dau = function (lop) { return APP.dauCho ? APP.dauCho(lop) : ''; };
   function tenGoi(t) { var p = String(t || '').trim().split(/\s+/); return p.length ? p[p.length - 1] : 'bạn'; }
   function veDs() {
     var ds = $('.ag-ds', khung), ng = (MC() && MC().nguoi()) || {};
@@ -247,7 +254,8 @@
         if (m.loi) return '<div class="ag-tn ag-agent"><div class="ag-bong ag-bao">' + e(m.chu) + '</div></div>';
         return '<div class="ag-tn ag-agent"><div class="ag-bong">' + veChu(m.chu, m.nguon_ten) + '<div class="ag-hd"><button type="button" data-chep="' + i + '">Sao chép</button></div></div></div>';
       }).join('') +
-      (dangGui ? '<div class="ag-tn ag-agent"><div class="ag-bong ag-cho" aria-label="Agent đang trả lời"><i></i><i></i><i></i></div></div>' : '') +
+      (dangGui ? '<div class="ag-tn ag-agent"><div class="ag-bong ag-nghi" role="status" aria-label="Agent đang trả lời"><div class="ag-nghi-dau">' + dau('nho') +
+        chuBuoc(['Đang đọc tài liệu khoá học…', 'Đang tìm đúng bài liên quan…', 'Đang soạn câu trả lời…', 'Sắp xong rồi…'], 2.2) + '</div><i class="xg"></i><i class="xg"></i><i class="xg"></i></div></div>' : '') +
       (!lich.length && !dangGui ? '<div class="ag-goi">' + goiY().map(function (g) { return '<button type="button" data-hoi="' + e(g) + '">' + e(g) + '</button>'; }).join('') + '</div>' : '');
     ds.scrollTop = ds.scrollHeight;
     veLuot();
@@ -324,9 +332,16 @@
       o.scrollTop = 0; return;
     }
     xemTL = -1;
+    if (dangTao) {
+      o.innerHTML = '<div class="ag-soan" role="status" aria-label="Agent đang soạn ' + e(dangTao.ten) + '"><div class="ag-soan-dau">' + dau('vua') +
+          '<span><b>Đang soạn ' + e(dangTao.ten.toLowerCase()) + '</b><small>' + e(dangTao.pv) + '</small></span></div>' +
+        chuBuoc(['Đang gom nội dung ' + dangTao.pv + '…', 'Đang chọn ý chính…', 'Đang sắp xếp thành tài liệu…', 'Đang ghi nguồn từng ý…', 'Sắp xong rồi…'], 2.4) +
+        '<i class="xg xg-h"></i><i class="xg"></i><i class="xg vua"></i><i class="xg ngan"></i><i class="xg xg-h"></i><i class="xg vua"></i><i class="xg"></i><i class="xg ngan"></i>' +
+        '<p class="ag-soan-ghi">Bạn có thể sang thẻ Hỏi đáp trong lúc chờ — tài liệu soạn xong tự mở ở đây.</p></div>';
+      return;
+    }
     o.innerHTML = '<label class="ag-pv"><span>Phạm vi</span><select>' + luaChon() + '</select></label>' +
       '<div class="ag-kieu">' + KIEU.map(function (k) { return '<button type="button" data-kieu="' + k[0] + '"' + (dangTao ? ' disabled' : '') + '><i aria-hidden="true"><svg viewBox="0 0 24 24">' + BIEU_KIEU[k[0]] + '</svg></i><span><b>' + k[1] + '</b><small>' + k[2] + '</small></span></button>'; }).join('') + '</div>' +
-      (dangTao ? '<p class="ag-dang-tao"><span class="ag-cho"><i></i><i></i><i></i></span>Agent đang soạn ' + e(dangTao) + '…</p>' : '') +
       (bao ? '<p class="ag-tl-loi" role="alert">' + e(bao) + '</p>' : '') +
       (taiLieu.length ? '<h4 class="ag-tl-tieu">Tài liệu đã tạo</h4><ul class="ag-tl-ds">' + taiLieu.map(function (t, i) { return '<li><button type="button" data-xem="' + i + '"><b>' + e(t.kieu_ten) + '</b><small>' + e(t.pham_vi.ten) + ' · ' + gioNgan(t.luc) + '</small></button></li>'; }).join('') + '</ul>'
         : '<p class="ag-tl-trong">Chọn phạm vi rồi bấm một loại tài liệu. Agent soạn từ đúng nội dung khoá học, có ghi nguồn bài để bạn mở lại.</p>');
@@ -334,7 +349,7 @@
   function taoTL(kieu) {
     if (dangTao || dangThi()) return;
     var sel = $('.ag-pv select', khung), pv = docPhamVi(sel ? sel.value : phamVi), k = KIEU.filter(function (x) { return x[0] === kieu; })[0];
-    phamVi = sel ? sel.value : phamVi; dangTao = k[1].toLowerCase() + ' · ' + pv.ten; veTL();
+    phamVi = sel ? sel.value : phamVi; dangTao = { ten: k[1], pv: pv.ten }; xemTL = -1; veTL();
     MC().goi('agent-tai-lieu', { kieu: kieu, pham_vi: pv, trang: { ten: ngCanh().ten } }).then(function (kq) {
       dangTao = '';
       if (kq && kq.ok) {
@@ -358,11 +373,13 @@
   // ================================================================ khung quản trị (trang #/quan-tri)
   // trang Quản trị vẽ lại cả trang khi sắp xếp / lọc / đổi quyền → khung Agent là phần tử mới: luôn vẽ vào khung ĐANG HIỆN (qtO),
   // chỉ tải cài đặt 1 lần (qtDangTai), trả lời về muộn cũng vẽ vào khung đang hiện
-  var qtTT = null, qtNk = null, qtTuDong = false, qtO = null, qtDangTai = null;
+  var qtTT = null, qtNk = null, qtTuDong = false, qtO = null, qtDangTai = null, qtVuaTai = false;
   function veQuanTri(o, bao, loiBao) {
     if (o) qtO = o; o = qtO;
     if (!o || !document.contains(o)) return;
-    if (!qtTT) { o.innerHTML = '<h2 id="qt-ag-tieu">Agent khoá học</h2><p class="phu">Đang tải cài đặt Agent…</p>'; taiQT(); return; }
+    if (!qtTT) { if (!o.querySelector('.cho')) o.innerHTML = '<h2 id="qt-ag-tieu">Agent khoá học</h2>' + APP.cho({ tieu: 'Đang mở cài đặt Agent', khung: 'o', co: 'vua',
+      buoc: ['Đọc cài đặt trên máy chủ…', 'Kiểm tra nguồn tài liệu…', 'Đếm câu hỏi hôm nay…', 'Sắp xong rồi…'] }); taiQT(); return; }
+    o.classList.toggle('vao-muot', qtVuaTai); qtVuaTai = false;
     var t = qtTT, mc = function (v, ten) { return '<option value="' + e(v) + '"' + (t.mo_hinh === v ? ' selected' : '') + '>' + e(ten) + '</option>'; };
     var ngMoi = taoNguon(), khop = t.nguon_ma === ngMoi.ma_ban;
     var chipNg = function (x) { return '<li class="ag-qt-ng ag-qt-ng-' + e(x.loai) + '"><span>' + e(x.ten) + '</span><small>' + Math.max(1, Math.round(x.do_dai / 1000)) + 'k chữ</small>' + (x.loai === 'them' ? '<button type="button" data-ag-bo="' + e(x.ma) + '" aria-label="Bỏ nguồn ' + e(x.ten) + '">×</button>' : '') + '</li>'; };
@@ -408,7 +425,7 @@
     var loiO = function (chu) { qtDangTai = null; if (qtO && document.contains(qtO)) qtO.innerHTML = '<h2 id="qt-ag-tieu">Agent khoá học</h2><p class="qt-loi">' + chu + '</p>'; };
     qtDangTai = MC().goi('agent-cai-dat').then(function (kq) {
       if (!kq || !kq.ok) { loiO(kq && kq.loi === 'loai' ? 'Máy chủ chưa lên bản có Agent (bản 6) — cần triển khai lại Apps Script.' : 'Chưa tải được cài đặt Agent (' + e((kq && kq.loi) || 'lỗi') + ').'); return; }
-      qtDangTai = null; qtTT = kq; veQuanTri();
+      qtDangTai = null; qtTT = kq; qtVuaTai = true; veQuanTri();
     }).catch(function () { loiO('Không kết nối được máy chủ.'); });
   }
   function guiQT(loai, them, xong, loiMap) {
@@ -442,7 +459,7 @@
           { 'khoa-sai': 'Khoá không dùng được (Google từ chối) — kiểm tra lại khoá.', 'qua-tai': 'Các mô hình đang bận / hết lượt — thử lại sau ít phút.', 'mo-hinh': 'Không mô hình nào trong danh sách dùng được với khoá này.' });
       } else if (a === 'xoa-khoa') { if (confirm('Xoá khoá Gemini khỏi máy chủ? Agent sẽ ngừng trả lời tới khi dán khoá mới.')) guiQT('agent-cai-dat', { dat: { khoa: '' } }, 'Đã xoá khoá — Agent ngừng trả lời.'); }
       else if (a === 'dong-bo') dongBo(false);
-      else if (a === 'nk') { t.disabled = true; t.textContent = 'Đang tải…'; MC().goi('agent-nhat-ky').then(function (kq) { if (kq && kq.ok) { qtNk = kq; veQuanTri(o); } else veQuanTri(o, 'Chưa tải được câu hỏi gần đây.', true); }).catch(function () { veQuanTri(o, 'Mất kết nối.', true); }); }
+      else if (a === 'nk') { t.disabled = true; t.innerHTML = dau('nho') + '<span>Đang đọc câu hỏi gần đây…</span>'; MC().goi('agent-nhat-ky').then(function (kq) { if (kq && kq.ok) { qtNk = kq; veQuanTri(o); } else veQuanTri(o, 'Chưa tải được câu hỏi gần đây.', true); }).catch(function () { veQuanTri(o, 'Mất kết nối.', true); }); }
       else if (t.hasAttribute('data-ag-bo')) { if (confirm('Bỏ nguồn này? Agent sẽ không trả lời theo nó nữa.')) guiQT('agent-bo-nguon', { ma: t.getAttribute('data-ag-bo') }, 'Đã bỏ nguồn.'); }
     });
     var ft = $('.ag-qt-them form', o);

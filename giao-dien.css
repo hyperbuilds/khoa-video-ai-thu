@@ -1024,3 +1024,101 @@ a.ag-ng:hover { background: var(--chinh); color: var(--tren-chinh); }
 .ag-qt-nk-tl p { margin: 0 0 6px; }
 .qt-chip.qt-loi-chip { background: var(--sai-mo); color: var(--sai); }
 @media (max-width: 760px) { .ag-qt-luoi { grid-template-columns: minmax(0, 1fr); } }
+
+/* ================================================================ MÀN CHỜ dùng chung (07/11, APP.cho / APP.dauCho trong ung-dung.js)
+   Điểm nhìn: lá Hecatech tự vẽ nét → đổ màu (vệt sáng lướt) → tan, lặp 3,2 s; vòng sáng xoay có đầu sao chổi vàng; quầng thở.
+   Chữ các bước trượt lên lần lượt (bước cuối đứng yên); thanh tiến độ chạy chậm dần. Khung xương đúng bố cục trang sắp hiện,
+   một dải sáng lướt đồng bộ trên mọi khối (background-attachment: fixed). Chạy cả khi máy bật "giảm chuyển động" (user muốn thấy). */
+.cho { position: relative; min-height: 340px; padding: 8px 0; }
+.cho-co-xuong { min-height: 560px; }
+.cho-vua { min-height: 0; padding: 18px 0; }
+.cho-the { position: relative; z-index: 1; margin: 40px auto 0; width: min(340px, 100%); box-sizing: border-box; display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center;
+  padding: 26px 26px 22px; border-radius: 22px; border: 1px solid var(--vien);
+  background: color-mix(in srgb, var(--mat) 86%, transparent); box-shadow: var(--bong-to); -webkit-backdrop-filter: blur(12px) saturate(1.15); backdrop-filter: blur(12px) saturate(1.15);
+  animation: cho-hien .55s var(--de) both; }
+.cho-co-xuong .cho-the { position: absolute; left: 50%; top: clamp(70px, 18vh, 170px); margin: 0; translate: -50% 0; }
+.cho-vua .cho-the { margin-top: 0; box-shadow: var(--bong); }
+@keyframes cho-hien { from { opacity: 0; transform: translateY(12px) scale(.97); } }
+.cho-tieu { margin-top: 6px; font-size: 16px; font-weight: 650; letter-spacing: -.015em; color: var(--chu); }
+.cho-chu { position: relative; display: block; width: 100%; height: 1.6em; overflow: hidden; font-size: 13.5px; line-height: 1.6; color: var(--chu-2); }
+.cho-chu > span { position: absolute; inset: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; opacity: 0; animation: cho-buoc 1.9s cubic-bezier(.4, 0, .2, 1) both; }
+.cho-chu > span.cuoi { animation-name: cho-buoc-cuoi; }
+@keyframes cho-buoc { 0% { opacity: 0; transform: translateY(85%); filter: blur(3px); } 16%, 82% { opacity: 1; transform: none; filter: none; } 100% { opacity: 0; transform: translateY(-85%); filter: blur(3px); } }
+@keyframes cho-buoc-cuoi { 0% { opacity: 0; transform: translateY(85%); filter: blur(3px); } 16%, 100% { opacity: 1; transform: none; filter: none; } }
+.cho-thanh { position: relative; display: block; width: 100%; max-width: 210px; height: 3px; margin-top: 8px; border-radius: 3px; overflow: hidden; background: color-mix(in srgb, var(--vien) 70%, transparent); }
+.cho-thanh i { position: absolute; inset: 0; border-radius: inherit; transform-origin: 0 50%; background: linear-gradient(90deg, var(--trang-tri), var(--chinh) 70%, var(--vang)); animation: cho-tien 9s cubic-bezier(.06, .7, .2, 1) both; }
+.cho-thanh i::after { content: ""; position: absolute; inset: 0; background: linear-gradient(90deg, transparent, rgba(255, 255, 255, .75), transparent); transform: translateX(-100%); animation: cho-lan 1.3s ease-in-out infinite; }
+@keyframes cho-tien { from { transform: scaleX(.04); } to { transform: scaleX(.94); } }
+@keyframes cho-lan { to { transform: translateX(100%); } }
+/* điểm nhìn */
+.cho-dau { position: relative; flex: none; width: 94px; height: 94px; display: grid; place-items: center; }
+.cho-dau::after { content: ""; position: absolute; inset: 0; border-radius: 50%; background: radial-gradient(circle at 50% 3px, var(--vang) 0 2.6px, color-mix(in srgb, var(--vang) 40%, transparent) 3.2px, transparent 6px);
+  animation: cho-xoay 1.6s linear infinite; }
+.cho-quang { position: absolute; inset: 8px; border-radius: 50%; background: radial-gradient(closest-side, color-mix(in srgb, var(--trang-tri) 32%, transparent), transparent); animation: cho-tho 2.6s ease-in-out infinite; }
+.cho-vong { position: absolute; inset: 0; border-radius: 50%; animation: cho-xoay 1.6s linear infinite;
+  background: conic-gradient(from 0deg, transparent 0 38%, color-mix(in srgb, var(--trang-tri) 18%, transparent) 55%, var(--trang-tri) 90%, var(--vang) 100%);
+  -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2.5px)); mask: radial-gradient(farthest-side, transparent calc(100% - 3px), #000 calc(100% - 2.5px)); }
+.cho-vong::before { content: ""; position: absolute; inset: 0; border-radius: 50%; box-shadow: inset 0 0 0 3px color-mix(in srgb, var(--vien) 60%, transparent); }
+@keyframes cho-xoay { to { transform: rotate(1turn); } }
+@keyframes cho-tho { 0%, 100% { transform: scale(.76); opacity: .5; } 50% { transform: scale(1.06); opacity: 1; } }
+.cho-la { position: relative; width: 46px; height: 62px; overflow: visible; }
+.cho-la-vien { fill: none; stroke: var(--chinh); stroke-width: 2.6; stroke-linecap: round; stroke-linejoin: round; stroke-dasharray: 1 1; stroke-dashoffset: 1; animation: cho-ve 3.2s cubic-bezier(.65, 0, .35, 1) -.4s infinite; }
+.cho-la-nen { opacity: 0; transform-box: fill-box; transform-origin: 50% 85%; animation: cho-do 3.2s cubic-bezier(.65, 0, .35, 1) infinite; }
+@keyframes cho-ve { 0% { stroke-dashoffset: 1; } 40%, 72% { stroke-dashoffset: 0; } 100% { stroke-dashoffset: -1; } }
+@keyframes cho-do { 0%, 26% { opacity: 0; transform: scale(.84); } 46%, 72% { opacity: 1; transform: scale(1); } 92%, 100% { opacity: 0; transform: scale(1.05); } }
+.cho-dau.nho { width: 30px; height: 30px; }
+.cho-dau.nho .cho-quang { inset: 2px; }
+.cho-dau.nho .cho-vong { -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #000 calc(100% - 1.5px)); mask: radial-gradient(farthest-side, transparent calc(100% - 2px), #000 calc(100% - 1.5px)); }
+.cho-dau.nho .cho-vong::before { box-shadow: inset 0 0 0 2px color-mix(in srgb, var(--vien) 60%, transparent); }
+.cho-dau.nho::after { background: radial-gradient(circle at 50% 2px, var(--vang) 0 1.6px, transparent 3px); }
+.cho-dau.nho .cho-la { width: 13px; height: 18px; }
+.cho-dau.nho .cho-la-vien { stroke-width: 5; }
+/* khung xương: dải sáng chung lướt chéo qua mọi khối */
+.cho-xuong { display: flex; flex-direction: column; gap: 14px; pointer-events: none; -webkit-mask-image: linear-gradient(#000 45%, transparent 96%); mask-image: linear-gradient(#000 45%, transparent 96%); }
+.cho-co-xuong .cho-xuong { position: absolute; inset: 0; }
+.xg { display: block; border-radius: 10px; background-color: var(--mat-2);
+  background-image: linear-gradient(105deg, transparent 40%, color-mix(in srgb, var(--mat) 75%, var(--trang-tri) 5%) 50%, transparent 60%);
+  background-size: 220vw 100%; background-repeat: no-repeat; background-attachment: fixed; animation: xg-lan 1.9s linear infinite; }
+@keyframes xg-lan { from { background-position: 120vw 0; } to { background-position: -120vw 0; } }
+.xg-nhan { width: 210px; height: 11px; } .xg-nho { width: 150px; height: 13px; }
+.xg-tieu { width: min(430px, 72%); height: 40px; border-radius: 12px; }
+.xg-meta { width: min(300px, 50%); height: 12px; margin-bottom: 8px; }
+.xg-luoi { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+.xg-hai { grid-template-columns: 1fr 1fr; }
+.xg-the { height: 98px; border-radius: 16px; }
+.xg-cao { height: 150px; }
+.xg-khoi { height: 120px; border-radius: 16px; }
+.xg-loc { display: flex; gap: 10px; } .xg-o { flex: 1; height: 40px; border-radius: 999px; }
+.xg-bang { display: flex; flex-direction: column; gap: 8px; } .xg-dong { height: 48px; border-radius: 12px; }
+.xg-dong:nth-child(even) { opacity: .7; }
+.cho-xuong-o { margin-bottom: 4px; }
+/* nội dung thật về: hiện mượt từng khối, không giật */
+.vao-muot > * { animation: cho-vao .6s var(--de) both; }
+.vao-muot > :nth-child(2) { animation-delay: .05s; } .vao-muot > :nth-child(3) { animation-delay: .1s; } .vao-muot > :nth-child(4) { animation-delay: .15s; }
+.vao-muot > :nth-child(5) { animation-delay: .2s; } .vao-muot > :nth-child(6) { animation-delay: .25s; } .vao-muot > :nth-child(n+7) { animation-delay: .3s; }
+@keyframes cho-vao { from { opacity: 0; transform: translateY(12px); } }
+/* Agent: bong bóng đang nghĩ + thẻ đang soạn tài liệu */
+.ag-nghi { display: flex; flex-direction: column; gap: 9px; width: min(260px, 70vw); }
+.ag-nghi-dau { display: flex; align-items: center; gap: 10px; }
+.ag-nghi .cho-chu, .ag-soan .cho-chu { text-align: left; font-size: 13px; }
+.ag-nghi .xg { height: 9px; border-radius: 6px; } .ag-nghi .xg:nth-of-type(2) { width: 86%; } .ag-nghi .xg:nth-of-type(3) { width: 64%; }
+.ag-soan { display: flex; flex-direction: column; gap: 10px; padding: 18px; border-radius: 16px; border: 1px solid var(--vien); background: var(--mat); box-shadow: var(--bong); animation: cho-vao .45s var(--de) both; }
+.ag-soan-dau { display: flex; align-items: center; gap: 12px; }
+.ag-soan-dau > span:last-child { display: flex; flex-direction: column; min-width: 0; flex: 1; }
+.ag-soan-dau b { font-size: 14.5px; }
+.ag-soan .xg { height: 10px; border-radius: 6px; }
+.ag-soan .xg.xg-h { width: 42%; height: 13px; margin-top: 6px; }
+.ag-soan .xg.ngan { width: 72%; } .ag-soan .xg.vua { width: 88%; }
+.ag-soan-ghi { margin: 2px 0 0; font-size: 12px; color: var(--nhat); }
+.ag-qt .cho { min-height: 0; }
+.cho-dau.vua { width: 52px; height: 52px; }
+.cho-dau.vua .cho-quang { inset: 4px; }
+.cho-dau.vua .cho-vong { -webkit-mask: radial-gradient(farthest-side, transparent calc(100% - 2.5px), #000 calc(100% - 2px)); mask: radial-gradient(farthest-side, transparent calc(100% - 2.5px), #000 calc(100% - 2px)); }
+.cho-dau.vua::after { background: radial-gradient(circle at 50% 2.5px, var(--vang) 0 2px, transparent 4px); }
+.cho-dau.vua .cho-la { width: 23px; height: 31px; }
+.cho-dau.vua .cho-la-vien { stroke-width: 3.6; }
+.ag-qt .cho-co-xuong { min-height: 300px; }
+.ag-qt .cho-co-xuong .cho-the { top: 40px; }
+.nut .cho-dau.nho { width: 22px; height: 22px; margin: -4px 0; }
+.nut .cho-dau.nho .cho-la { width: 10px; height: 13px; }
+.ag-tl-bai { animation: cho-vao .5s var(--de) both; }

@@ -9,7 +9,7 @@
   'use strict';
   var APP = window.KHOA_APP; if (!APP) return;
   var e = APP.e, K = APP.khoa, DS = APP.ds, QC = APP.qc, C = window.CAU_HINH || {};
-  var duLieu = null, loi = '', loc = { tim: '', bo_phan: '', chu_y: false, tt: '' }, sap = { cot: 'lan_cuoi', nguoc: true }, henSong = 0;
+  var vuaCho = false, duLieu = null, loi = '', loc = { tim: '', bo_phan: '', chu_y: false, tt: '' }, sap = { cot: 'lan_cuoi', nguoc: true }, henSong = 0;
   var MC = function () { return window.KHOA_MAY_CHU; };
 
   // giờ từ Sheet ("11/6/2026 15:45:06" kiểu en_US, hoặc "2026-11-06 15:45:06") và giờ ISO trong bài làm
@@ -26,12 +26,16 @@
     tien_do: +r['Tiến độ %'] || 0, bai_xong: r['Bài hoàn thành'] || '', phut: +r['Phút xem thật'] || 0, diem_tb: r['Điểm TB buổi'] === '' ? null : +r['Điểm TB buổi'],
     buoi: K.buoi.map(function (b) { return docBuoi(r['Buổi ' + b.so]); }), lan_dau: r['Lần đầu'], lan_cuoi: r['Lần cuối'], goc: r }; }
 
+  // 07/11: đang đọc Sheet thì lần gọi sau dùng chung lần đọc đó (trước đây trang vẽ lại khi phiên đăng nhập trả về → đọc Sheet 2 lần, màn chờ chạy lại từ đầu)
+  var dangTai = null;
   function tai() {
+    if (dangTai) return dangTai;
     loi = ''; duLieu = null;
-    return MC().goi('tong-hop').then(function (kq) {
+    dangTai = MC().goi('tong-hop').then(function (kq) {
       if (kq && kq.ok) duLieu = { nguoi: (kq.nguoi || []).map(hoc), bai: kq.bai || [], luc: kq.luc, ds_qt: kq.ds_quan_tri || { goc: [], them: [] }, hd: kq.hien_dien || {}, lech: kq.bay ? kq.bay - Date.now() : 0, luc_hd: Date.now() };
       else loi = kq && kq.loi === 'khong-quyen' ? 'Tài khoản này không có quyền quản trị.' : 'Không tải được dữ liệu (' + ((kq && kq.loi) || 'lỗi') + ').';
-    }).catch(function () { loi = 'Không kết nối được máy chủ. Kiểm tra mạng rồi bấm Tải lại.'; });
+    }).catch(function () { loi = 'Không kết nối được máy chủ. Kiểm tra mạng rồi bấm Tải lại.'; }).then(function () { dangTai = null; });
+    return dangTai;
   }
 
   // ---------------- trạng thái trực tiếp từ nhịp hoạt động
@@ -75,7 +79,7 @@
 
   window.KHOA_QUAN_TRI = function (main, email) {
     var mc = MC();
-    if (!mc || !mc.daVao()) { main.innerHTML = '<div class="qt"><p class="phu">Đang đăng nhập…</p></div>'; return; }
+    if (!mc || !mc.daVao()) { main.innerHTML = '<div class="qt">' + APP.cho({ tieu: 'Đang đăng nhập', buoc: ['Đang kiểm tra tài khoản quản trị…'], khung: 'qt-tong' }) + '</div>'; return; }
     if (!mc.laQuanTri()) { main.innerHTML = '<div class="qt"><header class="dau-bai"><span class="nhan">Quản trị</span><h1>Không có quyền</h1></header><p class="phu">Trang này chỉ dành cho người quản lý khoá học.</p><a class="nut" href="#/">← Về khoá học</a></div>'; return; }
     document.title = 'Quản trị · ' + K.ten;
     if (email) trangNguoi(main, email); else trangTong(main);
@@ -86,7 +90,10 @@
 
   // ================================================================ bảng tổng
   function trangTong(main) {
-    main.innerHTML = '<div class="qt"><p class="phu">Đang tải kết quả…</p></div>';
+    // 07/11: màn chờ có điểm nhìn (lá tự vẽ) + khung xương đúng bố cục; dữ liệu về thì các khối hiện mượt (vao-muot)
+    // màn chờ đang chạy thì giữ nguyên (không vẽ lại → không giật về bước đầu)
+    if (!duLieu && !$('.qt > .cho-co-xuong', main)) { vuaCho = true; main.innerHTML = '<div class="qt">' + APP.cho({ tieu: 'Đang mở kết quả học viên', khung: 'qt-tong',
+      buoc: ['Kết nối máy chủ…', 'Đọc dữ liệu từ Google Sheet…', 'Tổng hợp điểm và tiến độ…', 'Xem ai đang học ngay lúc này…', 'Sắp xong rồi…'] }) + '</div>'; }
     (duLieu ? Promise.resolve() : tai()).then(function () { if (vanO()) veTong(main); });
   }
   function veTong(main) {
@@ -98,7 +105,7 @@
     var chuY = ds.filter(canChuY).length, datB1 = ds.filter(function (h) { return h.buoi[0] && h.buoi[0].dat; }).length;
     var boPhan = ds.map(function (h) { return h.bo_phan; }).filter(function (x, i, a) { return x && a.indexOf(x) === i; }).sort();
     var soBuoi = Math.max(1, K.buoi.reduce(function (n, b, i) { return ds.some(function (h) { return h.buoi[i]; }) ? i + 1 : n; }, 0));
-    main.innerHTML = '<div class="qt">' +
+    main.innerHTML = '<div class="qt' + (vuaCho ? ' vao-muot' : '') + '">' +
       '<header class="dau-bai"><span class="nhan">Quản trị · ' + e(K.ten) + '</span><h1>Kết quả <em class="ng">học viên</em></h1>' +
         '<div class="meta"><span>Cập nhật ' + e(ngayGio(duLieu.luc)) + '</span><span>' + ds.length + ' người đã đăng nhập học</span></div></header>' +
       '<div class="qt-the">' + the('Người học', ds.length, 'đã đăng nhập') + the('Đang học', dangHoc, 'vào học trong 7 ngày qua') +
@@ -117,6 +124,7 @@
       '</tr></thead><tbody></tbody></table></div><p class="qt-ghi">Bấm vào một dòng để xem chi tiết bài làm, các lượt thi và cho thêm lượt thi.</p>' +
       '<section class="qt-muc qt-ql" id="qt-ql" aria-labelledby="qt-ql-tieu"></section>' +
       (window.KHOA_AGENT ? '<section class="qt-muc ag-qt" id="qt-agent" aria-labelledby="qt-ag-tieu"></section>' : '') + '</div>';
+    if (vuaCho) setTimeout(function () { vuaCho = false; }, 700); // lần vẽ lại ngay sau đó (phiên trả về) vẫn hiện mượt, không giật
     veDong(main, soBuoi);
     ganNut(main);
     veQuanTri(main);
@@ -249,22 +257,25 @@
 
   // ================================================================ một học viên
   function trangNguoi(main, email) {
-    main.innerHTML = '<div class="qt"><a class="qt-ve" href="#/quan-tri">← Tất cả học viên</a><p class="phu">Đang tải bài làm của ' + e(email) + '…</p></div>';
+    var ten = ((duLieu && duLieu.nguoi.filter(function (h) { return String(h.email).toLowerCase() === email.toLowerCase(); })[0]) || {}).ten || email;
+    main.innerHTML = '<div class="qt"><a class="qt-ve" href="#/quan-tri">← Tất cả học viên</a>' + APP.cho({ tieu: 'Đang mở hồ sơ ' + ten, khung: 'qt-nguoi',
+      buoc: ['Tìm bài làm trên máy chủ…', 'Đọc từng lượt thi, từng bài học…', 'Tính điểm từng buổi…', 'Sắp xong rồi…'] }) + '</div>';
+    var loiNguoi = function (chu) { main.innerHTML = '<div class="qt"><a class="qt-ve" href="#/quan-tri">← Tất cả học viên</a><p class="qt-loi">' + e(chu) + '</p></div>'; };
     if (!duLieu) tai().then(function () { if (vanO(email)) veTrangThaiNguoi(main, email); });
     capNhatSong(main, email);
     MC().goi('chi-tiet', { email: email }).then(function (kq) {
       if (!vanO(email)) return;
-      if (!kq || !kq.ok) { $('.qt .phu', main).textContent = kq && kq.loi === 'khong-quyen' ? 'Tài khoản này không có quyền quản trị.' : 'Không tải được (' + ((kq && kq.loi) || 'lỗi') + ').'; return; }
+      if (!kq || !kq.ok) { loiNguoi(kq && kq.loi === 'khong-quyen' ? 'Tài khoản này không có quyền quản trị.' : 'Không tải được (' + ((kq && kq.loi) || 'lỗi') + ').'); return; }
       veNguoi(main, email, kq.du_lieu || {}, kq.dong || {});
       veTrangThaiNguoi(main, email);
-    }).catch(function () { if (vanO(email)) $('.qt .phu', main).textContent = 'Không kết nối được máy chủ.'; });
+    }).catch(function () { if (vanO(email)) loiNguoi('Không kết nối được máy chủ.'); });
   }
   function veNguoi(main, email, D, dong) {
     ['bai', 'kt', 'tl', 'ck', 'kiem', 'ghi', 'hn', 'hnl', 'chung'].forEach(function (k) { D[k] = D[k] || {}; });
     var t = APP.tomTatCua(D), ten = dong['Họ tên (tự điền)'] || dong['Họ tên (Google)'] || D.chung.ten || email;
     var hoatDong = function (b) { return b.bai.some(function (x) { var r = D.bai[x.id]; return r && (r.giay || r.tg_trang || r.xong); }) || (D.kt[b.id] && (D.kt[b.id].nop || D.kt[b.id].dang)) || (D.tl[b.id] || []).some(Boolean); };
     var buoi = K.buoi.filter(hoatDong);
-    main.innerHTML = '<div class="qt"><a class="qt-ve" href="#/quan-tri">← Tất cả học viên</a>' +
+    main.innerHTML = '<div class="qt vao-muot"><a class="qt-ve" href="#/quan-tri">← Tất cả học viên</a>' +
       '<header class="dau-bai"><span class="nhan">Học viên</span><h1>' + APP.nghieng(ten) + '</h1>' +
         '<div class="meta"><span>' + e(email) + '</span>' + (t.bo_phan ? '<span>' + e(t.bo_phan) + '</span>' : '') + (t.nhom ? '<span>Nhóm ' + e(t.nhom) + '</span>' : '') +
         '<span>Vào học lần đầu ' + e(ngayGio(dong['Lần đầu'])) + '</span><span>Lần cuối ' + e(ngayGio(dong['Lần cuối'])) + '</span></div><div class="qt-tt-dong" id="qt-tt-dong" aria-live="polite"></div></header>' +

@@ -1447,7 +1447,48 @@
     ['bai', 'kt', 'tl', 'ck', 'kiem', 'ghi', 'hn', 'hnl', 'chung'].forEach(function (k) { D[k] = D[k] || {}; });
     try { return fn(); } finally { D = cu; }
   }
+  // ================================================================ MÀN CHỜ dùng chung (07/11, user: "lấy data từ sheet nên hơi lâu mà motion và effect
+  // loading nhìn tù, thiếu chuyên nghiệp — thiết kế lại cho smooth, mắt có điểm như đoạn phim loop để xem").
+  // Điểm nhìn = lá Hecatech TỰ VẼ → đổ màu → vệt sáng lướt → tan, lặp 3,2 s, trong vòng sáng xoay + quầng thở; dưới là các bước
+  // (chữ trượt lên lần lượt, bước cuối đứng yên) + thanh tiến độ chạy chậm dần. Sau lưng: khung xương đúng bố cục trang sắp hiện,
+  // có dải sáng lướt đồng bộ. Toàn bộ là CSS (không hẹn giờ) → vẽ đè trang mới là xong, không phải dọn.
+  var demCho = 0;
+  function dauCho(lop) {
+    var p = document.getElementById('hct-la-path'), d = p ? p.getAttribute('d') : '', id = 'cho-g' + (++demCho);
+    return '<span class="cho-dau' + (lop ? ' ' + lop : '') + '" aria-hidden="true"><i class="cho-quang"></i><i class="cho-vong"></i>' +
+      (d ? '<svg class="cho-la" viewBox="204 262 64 86"><defs><linearGradient id="' + id + '" x1="0" y1="0" x2="1" y2="1">' +
+        '<stop offset="0" stop-color="#1F714B"/><stop offset=".45" stop-color="#2E9A68"/><stop offset=".55" stop-color="#A8E8C4"/><stop offset=".65" stop-color="#2E9A68"/><stop offset="1" stop-color="#1F714B"/>' +
+        '<animateTransform attributeName="gradientTransform" type="translate" values="-1 -1;1 1" dur="3.2s" repeatCount="indefinite"/></linearGradient></defs>' +
+        '<path class="cho-la-nen" fill="url(#' + id + ')" d="' + d + '"/><path class="cho-la-vien" pathLength="1" d="' + d + '"/></svg>' : '') + '</span>';
+  }
+  var XUONG = {
+    'qt-tong': function () {
+      var hang = function (n, lop) { var s = ''; for (var i = 0; i < n; i++) s += '<i class="xg ' + lop + '"></i>'; return s; };
+      return '<div class="cho-xuong" aria-hidden="true"><i class="xg xg-nhan"></i><i class="xg xg-tieu"></i><i class="xg xg-meta"></i>' +
+        '<div class="xg-luoi">' + hang(5, 'xg-the') + '</div><i class="xg xg-khoi"></i><div class="xg-loc">' + hang(4, 'xg-o') + '</div>' +
+        '<div class="xg-bang">' + hang(7, 'xg-dong') + '</div></div>';
+    },
+    'qt-nguoi': function () {
+      return '<div class="cho-xuong" aria-hidden="true"><i class="xg xg-nho"></i><i class="xg xg-tieu"></i><i class="xg xg-meta"></i>' +
+        '<div class="xg-luoi">' + '<i class="xg xg-the"></i><i class="xg xg-the"></i><i class="xg xg-the"></i>' + '</div><i class="xg xg-khoi"></i><i class="xg xg-khoi xg-cao"></i></div>';
+    },
+    'o': function () { return '<div class="cho-xuong cho-xuong-o" aria-hidden="true"><div class="xg-luoi xg-hai"><i class="xg xg-the xg-cao"></i><i class="xg xg-the xg-cao"></i></div><i class="xg xg-khoi"></i></div>'; }
+  };
+  // cho({ tieu, buoc: [...], nhip: giây mỗi bước, khung: 'qt-tong' | 'qt-nguoi' | 'o', co: 'to' | 'vua' }) → HTML
+  function cho(o) {
+    o = o || {};
+    var buoc = o.buoc && o.buoc.length ? o.buoc : ['Đang tải…'], T = o.nhip || 1.9;
+    return '<div class="cho cho-' + (o.co || 'to') + (o.khung ? ' cho-co-xuong' : '') + '" role="status" aria-live="polite" aria-label="' + e(o.tieu || buoc[0]) + '">' +
+      (o.khung && XUONG[o.khung] ? XUONG[o.khung]() : '') +
+      '<div class="cho-the">' + dauCho() + (o.tieu ? '<b class="cho-tieu">' + e(o.tieu) + '</b>' : '') +
+        '<span class="cho-chu" aria-hidden="true">' + buoc.map(function (b, i) {
+          return '<span class="' + (i === buoc.length - 1 ? 'cuoi' : '') + '" style="animation-delay:' + (i * T).toFixed(2) + 's;animation-duration:' + T + 's">' + e(b) + '</span>';
+        }).join('') + '</span>' +
+        '<span class="cho-thanh" aria-hidden="true"><i style="animation-duration:' + Math.max(6, buoc.length * T * 1.6).toFixed(1) + 's"></i></span></div></div>';
+  }
+
   window.KHOA_APP = {
+    cho: cho, dauCho: dauCho,
     duLieu: function () { return D; },
     tomTat: tomTat,
     // trang quản trị (quan-tri.js): tóm tắt + điểm từng buổi trên bài làm tải từ máy chủ; dùng chung khoá học, công thức điểm, quy chế
