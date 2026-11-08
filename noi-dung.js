@@ -6,16 +6,17 @@ window.KHOA = {
   ma: 'nguyen-ly-video-ai',
   ban: '03/11/2026',
   ten: 'Làm video bán hàng bằng AI',
-  nhan: 'Khoá nền tảng · 3 buổi nguyên lý + 2 buổi thực hành',
-  phu: 'Phần 1 không bấm nút, không câu lệnh: hiểu vì sao workflow AI nhanh hơn và trúng hơn, nghĩ kịch bản như người làm nghề, biết mình làm gì trong nhóm. Phần 2 làm thật trên Xưởng: từ yêu cầu tới video đã đăng.',
+  nhan: 'Khoá nền tảng · 5 buổi học chung + 2 con đường học riêng',
+  phu: 'Phần 1 không bấm nút, không câu lệnh: hiểu vì sao workflow AI nhanh hơn và trúng hơn, nghĩ kịch bản như người làm nghề, đọc số để sửa đúng chỗ. Phần 2 làm thật trên Xưởng: từ yêu cầu tới video đã đăng. Phần 3 đi sâu theo con đường của bạn: tìm công thức cho sản phẩm đang tìm chỗ đứng, hoặc mở rộng sản phẩm đang bán tốt.',
   ket_qua: [
     { dt: 'Giải thích', chu: 'vòng workflow 7 bước và 3 điều nó mang lại: trúng hơn, nhanh hơn, giỏi dần.' },
+    { dt: 'Xác định', chu: 'sản phẩm mình cầm đang tìm chỗ đứng hay đang bán tốt, và con đường hợp với mình.' },
     { dt: 'Phân tích', chu: 'một video bán hàng thành hook, thân, kêu gọi; duyệt kịch bản bằng 5 câu hỏi.' },
-    { dt: 'Áp dụng', chu: '“làm kỹ một, nhân ra nhiều” để biến buổi live, video cũ thành cả lô video.' },
-    { dt: 'Thực hiện', chu: 'vòng Kaizen cuối ngày để Agent giỏi lên sau mỗi lô.' },
-    { dt: 'Xác định', chu: 'nhóm của mình, mục tiêu số video và cách kết quả được đo.' },
+    { dt: 'Đọc', chu: 'số sau khi đăng theo từng phần của video; biết khi nào sửa, khi nào nhân bản.' },
+    { dt: 'Thực hiện', chu: '“làm kỹ một, nhân ra nhiều” và vòng Kaizen cuối ngày để giỏi lên sau mỗi lô.' },
     { dt: 'Làm', chu: 'một video A→Z trên Xưởng: yêu cầu, duyệt 4 cổng, tự đăng, dán link cho máy đo.' },
-    { dt: 'Hoàn thiện', chu: 'video bằng Trình sửa, thay câu mở cho video có sẵn, nhờ Agent sửa bằng lời.' }
+    { dt: 'Hoàn thiện', chu: 'video bằng Trình sửa, thay câu mở cho video có sẵn, nhờ Agent sửa bằng lời.' },
+    { dt: 'Đi sâu', chu: 'con đường của mình: tìm ra video win cho sản phẩm mới, hoặc mở rộng qua KOL, KOC, affiliate và nhiều nền tảng.' }
   ],
   phan: { 1: 'Phần 1 · Nền tảng chung', 2: 'Phần 2 · Thực hành trên Xưởng', 3: 'Phần 3 · Học riêng theo con đường' },
   con_duong: { 1: 'Con đường 1 · Người tìm công thức', 2: 'Con đường 2 · Người mở rộng' },
@@ -132,8 +133,8 @@ window.KHOA = {
               hinh: { loai: 'cot', tieu: 'Tổng video cộng dồn', don: 'video', cot: [{ nhan: '17/10', gt: 184 }, { nhan: '25/10', gt: 586 }, { nhan: '01/11', gt: 947 }, { nhan: '02/11', gt: 1011 }], chu_cuoi: '= 5–10 tháng làm tay của một editor' } },
             { loi: 'Nhiều hơn mà vẫn trúng hơn. Tỷ lệ video đạt chuẩn, nghĩa là đã đăng có link TikTok và gắn giỏ hàng, tăng từ mười chín phần trăm lên bốn mươi sáu phần trăm chỉ trong một tuần.',
               hinh: { loai: 'so', tieu: 'Tỷ lệ video đạt chuẩn', muc: [{ tu: '19%', so: 46, hau: '%', don: 'video đạt chuẩn', phu: '26/10 → 02/11 · cùng một cách tính' }], dau: 'Gấp 2,4 lần trong 1 tuần' } },
-            { loi: 'Một bạn trong team đã viết rất đúng: hiệu quả không đến từ cảm hứng ngẫu nhiên, mà đến từ một quy trình có hệ thống. Bài tiếp theo, mình sẽ mở quy trình đó ra xem nó chạy thế nào.',
-              hinh: { loai: 'trich', chu: 'Hiệu quả sản xuất video không đến từ cảm hứng ngẫu nhiên mà đến từ một quy trình có hệ thống.', nguon: 'Bài thu hoạch · 21/10' } }
+            { loi: 'Hiệu quả không đến từ cảm hứng ngẫu nhiên, mà đến từ một quy trình có hệ thống. Quy trình đó gọi là workflow, tức là các bước làm việc nối nhau thành một vòng. Ở bài tiếp theo, mình sẽ mở vòng đó ra, nơi Agent đọc dữ liệu từ TikTok Shop, Douyin, Amazon và cả quảng cáo Facebook. Hẹn gặp bạn ở bài hai.',
+              hinh: { loai: 'trich', chu: 'Hiệu quả không đến từ cảm hứng ngẫu nhiên, mà đến từ một quy trình có hệ thống.', nguon: 'Điều cần nhớ · Bài tiếp theo: Nguyên lý một vòng' } }
           ],
           y_chinh: [
             'Agent không chỉ trả lời như chatbot: bạn giao việc, Agent tự chia bước, dùng công cụ (đọc dữ liệu, viết kịch bản, dựng video) làm đến khi xong rồi báo lại để bạn duyệt.',
@@ -163,7 +164,7 @@ window.KHOA = {
             ] },
             { loai: 'cot', tieu: 'Tổng video cộng dồn', phu: 'Toàn team · Dashboard Video AI', don: 'video', cot: [{ nhan: '17/10', gt: 184 }, { nhan: '25/10', gt: 586 }, { nhan: '01/11', gt: 947 }, { nhan: '02/11', gt: 1011 }] },
             { loai: 'luu-y', chu: '<b>Cách tính.</b> Video đạt chuẩn = đã đăng, có link TikTok và gắn giỏ hàng (nhóm Livestream: có link). Tỷ lệ 19% → 46% tính trên các nhóm bán qua giỏ hàng, cùng một cách tính ở hai ngày 26/10 và 02/11. “20–25 phút mỗi video” là mốc thời gian đã chốt ngày 05/11. “Ít nhất gấp 4 lần”: 20 video so với 3–5 video một người một ngày lúc đầu. “8 tháng đến hơn 1 năm”: 1.011 video chia cho 3–5 video một ngày, 26 ngày công một tháng.' },
-            { loai: 'trich', muc: [{ chu: 'Hiệu quả sản xuất video không đến từ cảm hứng ngẫu nhiên mà đến từ một quy trình có hệ thống.', nguon: 'Bài thu hoạch · 21/10' }] }
+            { loai: 'trich', muc: [{ chu: 'Hiệu quả không đến từ cảm hứng ngẫu nhiên, mà đến từ một quy trình có hệ thống.', nguon: 'Điều cần nhớ' }] }
           ],
           hoi_nhanh: [
             { hoi: 'Điều gì giúp Agent đề xuất ý tưởng tốt hơn một người tự nghĩ?', chon: ['Agent có nhiều cảm hứng hơn', 'Agent đọc hàng trăm video bán chạy và video của team trước khi viết', 'Agent không cần người duyệt', 'Agent viết dài hơn'], dap: 1,
@@ -192,8 +193,8 @@ window.KHOA = {
               hinh: { loai: 'vong', sang: [5, 6] } },
             { loi: 'Tóm lại ba nguyên lý. Nhanh, vì không phải làm lại từ đầu. Đúng, vì mọi thứ căn cứ từ kịch bản. Và giỏi dần, vì mỗi vòng đều học lại.',
               hinh: { loai: 'danh-sach', tieu: '3 nguyên lý', muc: [{ tieu: 'Nhanh', chu: 'vì không làm lại từ đầu' }, { tieu: 'Đúng', chu: 'vì mọi thứ căn cứ từ kịch bản' }, { tieu: 'Giỏi dần', chu: 'vì mỗi vòng đều học lại' }] } },
-            { loi: 'Và như một bạn đã rút ra sau buổi học: đầu vào phải đủ cả chất lẫn lượng. Agent chỉ giỏi bằng dữ liệu mình cho nó.',
-              hinh: { loai: 'trich', chu: 'Đầu vào của workflow rất quan trọng, nguồn đầu vào phải đầy đủ về cả chất và lượng.', nguon: 'Bài thu hoạch · 19/10' } }
+            { loi: 'Hãy nhớ một điều: Agent chỉ giỏi bằng dữ liệu mình cho nó. Ở bài ba, bạn sẽ thấy hai con đường để làm ra video bán được, và một tinh thần chung cho cả hai. Hẹn gặp bạn ở bài ba.',
+              hinh: { loai: 'trich', chu: 'Agent chỉ giỏi bằng dữ liệu mình cho nó.', nguon: 'Điều cần nhớ · Bài tiếp theo: Hai con đường, một tinh thần' } }
           ],
           y_chinh: [
             'Lợi thế lớn nhất là dữ liệu lớn: video bán chạy trên TikTok Shop (Kalodata, FastMoss), Douyin (Chanmama), Amazon, quảng cáo Facebook — cùng video thắng của chính brand (shop TikTok, GMV Max) và số đơn thật của team. Agent đọc hết rồi mới viết.',
@@ -222,8 +223,8 @@ window.KHOA = {
               { tieu: 'CPM · CPA', chu: 'Chi phí quảng cáo: CPM tính trên 1.000 lượt hiển thị, CPA tính trên mỗi đơn.' }
             ] },
             { loai: 'trich', muc: [
-              { chu: 'Không tin cái gì 100%, phải đọc, phản biện, tìm lỗi của nó.', nguon: 'Bài thu hoạch · 19/10' },
-              { chu: 'Khi hành động lặp đi lặp lại, AI sẽ làm tốt hơn và nhanh hơn rất nhiều.', nguon: 'Bài thu hoạch · 21/10' }
+              { chu: 'Không tin cái gì 100%: đọc, phản biện, tìm lỗi.', nguon: 'Nguyên tắc khi làm với Agent' },
+              { chu: 'Việc càng lặp đi lặp lại, AI càng làm tốt hơn và nhanh hơn.', nguon: 'Điều cần nhớ' }
             ] }
           ],
           hoi_nhanh: [

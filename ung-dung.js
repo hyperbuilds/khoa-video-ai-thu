@@ -1164,7 +1164,7 @@
         }
         return '<p class="nhan nhan-phan">' + e(K.phan[ph]) + '</p><div class="ds-buoi">' + ds.map(theBuoi).join('') + '</div>';
       }).join('') + '</section>' +
-      '<section class="muc-tong"><header><span class="nhan">' + so2(5) + 'Hai con đường</span><h2>Hai con đường, <em class="ng">một tinh thần</em></h2><p>Sản phẩm đang tìm chỗ đứng cần người tìm công thức. Sản phẩm đang bán tốt cần người mở rộng. Ai cũng học chung ' + K.buoi.length + ' buổi nền tảng, rồi đi sâu vào con đường của mình.</p></header>' + veKhoi({ loai: 'hai-nhom', an_dau: true }) + '</section>' +
+      '<section class="muc-tong"><header><span class="nhan">' + so2(5) + 'Hai con đường</span><h2>Hai con đường, <em class="ng">một tinh thần</em></h2><p>Sản phẩm đang tìm chỗ đứng cần người tìm công thức. Sản phẩm đang bán tốt cần người mở rộng. Ai cũng học chung ' + K.buoi.filter(function (b) { return (b.phan || 1) < 3; }).length + ' buổi, rồi đi sâu vào con đường của mình.</p></header>' + veKhoi({ loai: 'hai-nhom', an_dau: true }) + '</section>' +
       '<section class="muc-tong"><header><span class="nhan">' + so2(6) + 'Cách học</span><h2>Nhẹ hơn <em class="ng">bạn nghĩ</em></h2><p>Mọi bài tập, bài kiểm tra làm trong giờ hành chính. Chưa kịp thì báo người hướng dẫn để lùi hạn.</p></header><div class="cach-hoc">' +
       K.cach_hoc.map(function (c) { return '<div><b>' + e(c.tieu) + '</b>' + e(c.chu) + '</div>'; }).join('') + '</div></section>' +
       '<section class="chot"><h2>' + dau(T.chot.tieu) + '</h2><p>' + e(T.chot.phu) + '</p><div class="hang">' + nutHoc + '</div>' + moKhoa + '</section>';
