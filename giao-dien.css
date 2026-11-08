@@ -1122,3 +1122,21 @@ a.ag-ng:hover { background: var(--chinh); color: var(--tren-chinh); }
 .nut .cho-dau.nho { width: 22px; height: 22px; margin: -4px 0; }
 .nut .cho-dau.nho .cho-la { width: 10px; height: 13px; }
 .ag-tl-bai { animation: cho-vao .5s var(--de) both; }
+
+/* ================================================================ PHẦN 3 · HỌC RIÊNG THEO CON ĐƯỜNG (09/11)
+   Mục lục: tiêu đề từng con đường dưới nhãn Phần 3. Trang chủ: hai cột con đường cạnh nhau, mỗi cột các buổi nối tiếp có mũi nối. */
+.ml-con-duong { display: flex; flex-direction: column; gap: 1px; margin: 12px 12px 2px; padding: 8px 10px; border-radius: 10px; background: var(--ben-re); border-left: 3px solid var(--ben-tien); }
+.ml-con-duong span { font-size: 12.5px; font-weight: 600; color: var(--tren-ben); line-height: 1.35; }
+.ml-con-duong small { font: 500 10px/1.5 var(--f-mo); letter-spacing: .06em; color: var(--ben-chu-2); }
+.ml-con-duong + .ml-buoi { margin-top: 4px; }
+.ds-con-duong { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+.con-duong { display: flex; flex-direction: column; gap: 12px; padding: 16px; border-radius: calc(var(--r-l) + 6px); background: color-mix(in srgb, var(--chinh-mo) 55%, var(--nen)); border: 1px solid color-mix(in srgb, var(--chinh) 18%, var(--vien)); }
+.con-duong.cd-2 { background: color-mix(in srgb, var(--cam-mo) 55%, var(--nen)); border-color: color-mix(in srgb, var(--vang) 30%, var(--vien)); }
+.cd-tieu { display: flex; flex-direction: column; gap: 2px; margin: 0 4px; font-size: 19px; letter-spacing: -.02em; }
+.cd-tieu span { font: 600 11px/1.5 var(--f-mo); letter-spacing: .14em; text-transform: uppercase; color: var(--chinh); }
+.cd-2 .cd-tieu span { color: var(--cam); }
+.cd-buoi { display: flex; flex-direction: column; gap: 14px; }
+.cd-buoi .the-buoi { position: relative; }
+.cd-buoi .the-buoi + .the-buoi::before { content: ""; position: absolute; left: 32px; top: -15px; width: 2px; height: 14px; background: color-mix(in srgb, var(--chinh) 45%, transparent); }
+.cd-2 .cd-buoi .the-buoi + .the-buoi::before { background: color-mix(in srgb, var(--vang) 60%, transparent); }
+@media (max-width: 860px) { .ds-con-duong { grid-template-columns: minmax(0, 1fr); } }

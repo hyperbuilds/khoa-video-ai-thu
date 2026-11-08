@@ -50,10 +50,26 @@
   var hnNop = function (id) { var h = D.hnl[id]; return !!(h && h.lan); };
   function viTriBai(id) { for (var i = 0; i < DS.length; i++) if (DS[i].bai.id === id) return i; return -1; }
   // điều còn thiếu để mở bài id (null = đã mở)
+  // 09/11 (Phần 3 hai con đường): buổi có mo_sau thì mở khi ĐẠT kiểm tra buổi đó (Buổi 6 và 8 cùng mở sau Buổi 5; 7 sau 6; 9 sau 8);
+  // buổi không có mo_sau thì mở sau buổi liền trước như cũ. Trong một buổi vẫn học tuần tự từng bài.
+  function buoiTruoc(b) { if (b.mo_sau) return timBuoi(b.mo_sau); var k = K.buoi.indexOf(b); return k > 0 ? K.buoi[k - 1] : null; }
+  // nút cuối trang kiểm tra: các buổi mở ra nhờ buổi này (Buổi 5 → cả hai con đường); hết nhánh thì gợi ý con đường còn lại chưa học
+  function nutBuoiSau(b) {
+    var ten = function (x) { return 'Sang Buổi ' + x.so + (x.con_duong && K.con_duong ? ' · ' + K.con_duong[x.con_duong] : x.phan === 2 && (b.phan || 1) === 1 ? ' · thực hành trên Xưởng' : ''); };
+    var con = K.buoi.filter(function (x) { return buoiTruoc(x) === b; });
+    if (con.length) return con.map(function (x, k) { return '<a class="nut' + (k === 0 ? ' chinh' : '') + '" href="#/bai/' + x.bai[0].id + '">' + e(ten(x)) + ' →</a>'; }).join('');
+    var khac = K.buoi.filter(function (x) { return x.con_duong && x.con_duong !== b.con_duong && !ktDat(x.id) && !chuaMo(x.bai[0].id); })[0];
+    if (b.con_duong && khac) return '<a class="nut chinh" href="#/bai/' + khac.bai[0].id + '">Học thêm ' + e(K.con_duong[khac.con_duong]) + ' →</a>';
+    return '<a class="nut chinh" href="#/">Về trang khoá học →</a>';
+  }
   function chuaMo(id) {
     var i = viTriBai(id); if (MO_HET || i <= 0) return null;
+    var cur = DS[i];
+    if (cur.i === 0) {
+      var tb = buoiTruoc(cur.b); if (!tb) return null;
+      return ktDat(tb.id) ? null : { chu: 'Đạt bài kiểm tra cuối Buổi ' + tb.so + ' để mở Buổi ' + cur.b.so + '.', link: '#/kiem-tra/' + tb.id, nut: 'Làm kiểm tra Buổi ' + tb.so };
+    }
     var tr = DS[i - 1];
-    if (tr.b !== DS[i].b) return ktDat(tr.b.id) ? null : { chu: 'Đạt bài kiểm tra cuối Buổi ' + tr.b.so + ' để mở Buổi ' + DS[i].b.so + '.', link: '#/kiem-tra/' + tr.b.id, nut: 'Làm kiểm tra Buổi ' + tr.b.so };
     return baiXong(tr.bai.id) ? null : { chu: 'Hoàn thành bài ' + tr.b.so + '.' + (tr.i + 1) + ' (xem hết video, nộp câu hỏi nhanh, bấm Hoàn thành) để mở bài này.', link: '#/bai/' + tr.bai.id, nut: 'Về bài ' + tr.b.so + '.' + (tr.i + 1) };
   }
   function chuaMoKt(bid) {
@@ -140,11 +156,13 @@
     $('#tien-chu').textContent = t.pct + '% · ' + t.xong + '/' + t.tong + ' mục';
   }
   function veMucLuc(dang) {
-    var h = '<a class="ml-tong" href="#/"' + (dang === 'tong' ? ' aria-current="page"' : '') + '>Tổng quan khoá học</a>', phanTruoc = 0;
+    var h = '<a class="ml-tong" href="#/"' + (dang === 'tong' ? ' aria-current="page"' : '') + '>Tổng quan khoá học</a>', phanTruoc = 0, cdTruoc = 0;
     K.buoi.forEach(function (b) {
       var xong = b.bai.filter(function (x) { return baiXong(x.id); }).length + (ktDat(b.id) ? 1 : 0);
       var phan = b.phan || 1;
       if (phan !== phanTruoc && K.phan) { h += '<p class="ml-phan">' + e(K.phan[phan]) + '</p>'; phanTruoc = phan; }
+      // Phần 3: tiêu đề từng con đường (09/11)
+      if (b.con_duong && b.con_duong !== cdTruoc && K.con_duong) { h += '<p class="ml-con-duong"><span>' + e(K.con_duong[b.con_duong]) + '</span>' + (b.mo_sau ? '<small>mở sau Buổi ' + (timBuoi(b.mo_sau) || {}).so + '</small>' : '') + '</p>'; cdTruoc = b.con_duong; }
       h += '<div class="ml-buoi"><div class="ml-buoi-dau"><small>Buổi ' + hai(b.so) + '</small><b>' + e(b.ten) + '</b>' +
         '<div class="ml-thanh" title="' + xong + '/' + (b.bai.length + 1) + ' mục"><i style="width:' + Math.round(xong / (b.bai.length + 1) * 100) + '%"></i></div></div><ol>';
       b.bai.forEach(function (x, i) {
@@ -913,25 +931,22 @@
           '<div class="nhanh"><b>' + e(nh2[2][0]) + '</b>' + e(nh2[2][1]) + '</div><div class="nhanh"><b>' + e(nh2[3][0]) + '</b>' + e(nh2[3][1]) + '</div><p class="loi-goc">' + e(k.chu) + '</p></div>';
         break;
       case 'hai-nhom':
-        tieu = '<h3>Hai nhóm, hai chuyên ngành</h3>'; phu = '<p class="phu">Theo biên bản họp Team AI 02/11 và bảng target 30/10. Lead đồng hành mỗi nhóm đang chốt.</p>';
+        // nội dung chung cho người học cả công ty: không mã dự án, target, ngân sách hay cuộc họp (user 08/11)
+        tieu = '<h3>Hai con đường, một tinh thần</h3>'; phu = '<p class="phu">Đi đường nào cũng chung giá trị cốt lõi: học tập và phát triển không ngừng.</p>';
         if (k.an_dau) { tieu = ''; phu = ''; }
         var hang = function (n, d) { return '<div class="nhom-o ' + n.lop + '"><header><small>' + n.nhan + '</small><h3>' + n.ten + '</h3><p>' + n.sp + '</p></header><dl>' +
           d.map(function (r) { return '<dt>' + r[0] + '</dt><dd>' + r[1] + '</dd>'; }).join('') + '</dl></div>'; };
         trong = '<div class="hai-nhom">' +
-          hang({ lop: 'n1', nhan: 'Nhóm 1', ten: 'Mở đường', sp: 'Sản phẩm mới + sản phẩm cũ đang giảm số' }, [
-            ['Kỹ năng trọng tâm', 'Đạo diễn; quay, dựng video chuyển đổi'],
-            ['Việc chính', 'Viết kịch bản tự quay → quay thêm cảnh → cắt ghép → video chuyển đổi; tận dụng tài nguyên cũ'],
-            ['Người phù hợp', 'Toàn diện — sẽ là người cầm các dự án mới'],
-            ['Dự án', 'TNR · TDCR · KTMVN · TDCVN · XKMTL · Baylis'],
-            ['Mục tiêu', '<b>30 video / ngày · 180 / tuần</b> (5 video / dự án / ngày)'],
-            ['Ngân sách test', '1 triệu / dự án / tuần']]) +
-          hang({ lop: 'n2', nhan: 'Nhóm 2', ten: 'Nhân rộng', sp: 'Sản phẩm đang win' }, [
-            ['Kỹ năng trọng tâm', 'Kịch bản; nhận angle; dùng Agent; đánh giá và Kaizen'],
-            ['Việc chính', 'Viết kịch bản Affiliate + KOL → video chuyển đổi; liên hệ Affiliate, cắt ghép nguồn thô; cắt ghép tài nguyên mới'],
-            ['Người phù hợp', 'Chắc kịch bản, thích đọc số và thử nghiệm'],
-            ['Dự án', 'SRMR · KTMR · XKMVN · KTLVN · KTLTL'],
-            ['Mục tiêu', '<b>23 video / ngày · 138 / tuần</b>'],
-            ['Ngân sách test', '1 triệu / dự án / tuần']]) + '</div>';
+          hang({ lop: 'n1', nhan: 'Con đường 1', ten: 'Người tìm công thức', sp: 'Sản phẩm đang tìm chỗ đứng: mới ra, hoặc đang đi xuống' }, [
+            ['Việc chính', 'Tìm ra video win: hiểu sản phẩm → chọn angle → lên cảnh quay → dựng video → đọc số, sửa tới khi ra đơn'],
+            ['Kỹ năng trọng tâm', 'Hiểu sản phẩm, chọn angle, quay và dựng video chuyển đổi, đọc số'],
+            ['Hợp với', 'Người thích tự tay làm từ đầu đến cuối'],
+            ['Dẫn tới', 'Cầm trọn một dự án']]) +
+          hang({ lop: 'n2', nhan: 'Con đường 2', ten: 'Người mở rộng', sp: 'Sản phẩm đang bán tốt: sản phẩm chủ lực của thương hiệu' }, [
+            ['Việc chính', 'Vừa đưa sản phẩm tới nhiều người hơn (KOL, KOC, affiliate, nhiều nền tảng), vừa liên tục thử angle mới'],
+            ['Kỹ năng trọng tâm', 'Kịch bản cho KOL, KOC, affiliate; duyệt video; đọc số; cần đủ kỹ năng của con đường 1'],
+            ['Hợp với', 'Người thích nhìn bức tranh lớn và làm việc với nhiều người'],
+            ['Dẫn tới', 'Dẫn dắt một đội làm nội dung']]) + '</div>';
         break;
       case 'nhip':
         trong = '<ol class="nhip">' + k.muc.map(function (m) { return '<li><b>' + e(m[0]) + '</b>' + e(m[1]) + '</li>'; }).join('') + '</ol>';
@@ -1130,16 +1145,27 @@
       T.duoc.muc.map(function (m) { return '<li><span><b>' + e(m.tieu) + '</b>' + e(m.chu) + '</span></li>'; }).join('') + '</ul></section>' +
       '<section class="muc-tong"><header><span class="nhan">' + so2(3) + 'Người học nói gì</span><h2>Không phải lời hứa. <em class="ng">Là lời của chính đồng đội bạn.</em></h2><p>Trích bài thu hoạch người học tự viết sau mỗi buổi, 19/10–02/11/2026.</p></header>' +
       '<div class="loi-hv"><div class="hv-so"><b>' + e(T.hoc_vien.so) + '</b><span>' + e(T.hoc_vien.chu) + '</span></div>' + T.loi_ban_hoc.map(function (q) { return '<blockquote><p>' + e(q.chu) + '</p><footer>' + e(q.nguon) + '</footer></blockquote>'; }).join('') + '</div><p class="bc-nguon chang-tiep">' + e(T.chang_tiep) + '</p></section>' +
-      '<section class="muc-tong" id="lo-trinh"><header><span class="nhan">' + so2(4) + 'Lộ trình</span><h2>' + K.buoi.length + ' buổi, <em class="ng">mỗi buổi gỡ một nút thắt</em></h2><p>3 buổi đầu: hiểu vì sao cách làm mới nhanh và trúng hơn. 2 buổi sau: làm thật trên Xưởng, từ yêu cầu tới video đã đăng. Mỗi bài có tài liệu cạnh video và câu hỏi chấm ngay.</p></header>' +
-      [1, 2].map(function (ph) {
-        return '<p class="nhan nhan-phan">' + e(K.phan[ph]) + '</p><div class="ds-buoi">' + K.buoi.filter(function (b) { return (b.phan || 1) === ph; }).map(function (b) {
-          return '<a class="the-buoi" href="#/bai/' + b.bai[0].id + '"><span class="nhan">Buổi ' + hai(b.so) + '</span><h3>' + e(b.ten) + '</h3><p>' + e(b.phu) + '</p><ol>' +
+      '<section class="muc-tong" id="lo-trinh"><header><span class="nhan">' + so2(4) + 'Lộ trình</span><h2>' + K.buoi.length + ' buổi, <em class="ng">mỗi buổi gỡ một nút thắt</em></h2><p>3 buổi đầu: hiểu vì sao cách làm mới nhanh và trúng hơn. 2 buổi sau: làm thật trên Xưởng, từ yêu cầu tới video đã đăng.' +
+        (K.phan && K.phan[3] ? ' Phần 3: học riêng theo con đường của bạn — học được cả hai.' : '') + ' Mỗi bài có tài liệu cạnh video và câu hỏi chấm ngay.</p></header>' +
+      Object.keys(K.phan || { 1: '' }).map(Number).filter(function (ph) { return K.buoi.some(function (b) { return (b.phan || 1) === ph; }); }).map(function (ph) {
+        var theBuoi = function (b) {
+          return '<a class="the-buoi" href="#/bai/' + b.bai[0].id + '"><span class="nhan">Buổi ' + hai(b.so) + (b.mo_sau ? ' · mở sau Buổi ' + (timBuoi(b.mo_sau) || {}).so : '') + '</span><h3>' + e(b.ten) + '</h3><p>' + e(b.phu) + '</p><ol>' +
             b.bai.map(function (x, i) { return '<li><span class="so">' + b.so + '.' + (i + 1) + '</span><span>' + e(x.ten) + '</span><small>' + x.phut + ' phút</small></li>'; }).join('') + '</ol>' +
-            '<div class="tdkn"><span><b>Tư duy:</b> ' + e(b.bai[0].tu_duy) + '</span><span><b>Kỹ năng:</b> ' + e(b.bai[1].ky_nang) + '</span></div></a>';
-        }).join('') + '</div>';
+            '<div class="tdkn"><span><b>Tư duy:</b> ' + e(b.bai[0].tu_duy) + '</span><span><b>Kỹ năng:</b> ' + e((b.bai[1] || b.bai[0]).ky_nang) + '</span></div></a>';
+        };
+        var ds = K.buoi.filter(function (b) { return (b.phan || 1) === ph; });
+        // Phần 3 (09/11): hai con đường cạnh nhau, mỗi con đường một cột các buổi nối tiếp
+        if (ds.some(function (b) { return b.con_duong; })) {
+          var cds = ds.map(function (b) { return b.con_duong; }).filter(function (c, i, a) { return c && a.indexOf(c) === i; });
+          return '<p class="nhan nhan-phan">' + e(K.phan[ph]) + '</p><div class="ds-con-duong">' + cds.map(function (c) {
+            var cac = ds.filter(function (b) { return b.con_duong === c; });
+            return '<div class="con-duong cd-' + c + '"><h3 class="cd-tieu"><span>Con đường ' + c + '</span>' + e(String((K.con_duong || {})[c] || '').replace(/^Con đường \d+\s*·\s*/, '')) + '</h3><div class="cd-buoi">' + cac.map(theBuoi).join('') + '</div></div>';
+          }).join('') + '</div>';
+        }
+        return '<p class="nhan nhan-phan">' + e(K.phan[ph]) + '</p><div class="ds-buoi">' + ds.map(theBuoi).join('') + '</div>';
       }).join('') + '</section>' +
-      '<section class="muc-tong"><header><span class="nhan">' + so2(5) + 'Bạn ở nhóm nào</span><h2>Hai nhóm, <em class="ng">hai con đường đi lên</em></h2><p>Nhóm 1 mở đường cho sản phẩm mới — những người sẽ cầm các dự án mới. Nhóm 2 nhân rộng sản phẩm đang bán chạy. Cả team học chung ' + K.buoi.length + ' buổi, rồi mỗi nhóm luyện sâu kỹ năng của mình.</p></header>' + veKhoi({ loai: 'hai-nhom', an_dau: true }) + '</section>' +
-      '<section class="muc-tong"><header><span class="nhan">' + so2(6) + 'Cách học</span><h2>Nhẹ hơn <em class="ng">bạn nghĩ</em></h2><p>Mọi bài tập, bài kiểm tra làm trong giờ hành chính. Chưa kịp thì báo lead để lùi hạn.</p></header><div class="cach-hoc">' +
+      '<section class="muc-tong"><header><span class="nhan">' + so2(5) + 'Hai con đường</span><h2>Hai con đường, <em class="ng">một tinh thần</em></h2><p>Sản phẩm đang tìm chỗ đứng cần người tìm công thức. Sản phẩm đang bán tốt cần người mở rộng. Ai cũng học chung ' + K.buoi.length + ' buổi nền tảng, rồi đi sâu vào con đường của mình.</p></header>' + veKhoi({ loai: 'hai-nhom', an_dau: true }) + '</section>' +
+      '<section class="muc-tong"><header><span class="nhan">' + so2(6) + 'Cách học</span><h2>Nhẹ hơn <em class="ng">bạn nghĩ</em></h2><p>Mọi bài tập, bài kiểm tra làm trong giờ hành chính. Chưa kịp thì báo người hướng dẫn để lùi hạn.</p></header><div class="cach-hoc">' +
       K.cach_hoc.map(function (c) { return '<div><b>' + e(c.tieu) + '</b>' + e(c.chu) + '</div>'; }).join('') + '</div></section>' +
       '<section class="chot"><h2>' + dau(T.chot.tieu) + '</h2><p>' + e(T.chot.phu) + '</p><div class="hang">' + nutHoc + '</div>' + moKhoa + '</section>';
     $$('[data-cuon]', main).forEach(function (b) { b.addEventListener('click', function () { var d = document.getElementById(b.getAttribute('data-cuon')); if (d) d.scrollIntoView({ behavior: 'smooth', block: 'start' }); }); });
@@ -1204,7 +1230,7 @@
       '<section id="kt-tn"></section>' +
       '<section><h2><span class="so-muc">02</span>Tự luận</h2><p class="phu">Người hướng dẫn chấm phần này. Viết như đang nói với đồng nghiệp.</p>' +
       b.tu_luan.map(function (q, k) { return '<fieldset class="cau"><legend><small>Câu ' + (k + 1) + '</small>' + e(q) + '</legend><textarea rows="4" data-tl="' + k + '">' + e(tl[k] || '') + '</textarea></fieldset>'; }).join('') + '</section>' +
-      '<section><h2><span class="so-muc">03</span>Bài tập</h2><p class="phu">Làm trong giờ hành chính của ngày làm việc. Chưa kịp thì báo lead để lùi hạn.</p>' +
+      '<section><h2><span class="so-muc">03</span>Bài tập</h2><p class="phu">Làm trong giờ hành chính của ngày làm việc. Chưa kịp thì báo người hướng dẫn để lùi hạn.</p>' +
       '<div class="cuon-ngang"><table class="bang-tl"><thead><tr><th>Việc</th><th>Thời gian</th><th>Đạt khi</th></tr></thead><tbody>' +
       b.bai_tap.map(function (r) { return '<tr><td>' + e(r[0]) + '</td><td>' + e(r[1]) + '</td><td>' + e(r[2]) + '</td></tr>'; }).join('') + '</tbody></table></div></section>' +
       '<section><h2><span class="so-muc">04</span>Checklist</h2><div class="ds-check">' + b.checklist.map(function (c, k) { return '<label><input type="checkbox" data-ck="' + k + '"' + (ck[k] ? ' checked' : '') + '><span>' + e(c) + '</span></label>'; }).join('') + '</div></section>' +
@@ -1219,7 +1245,7 @@
       '<p class="tom-tat" aria-live="polite"></p><div class="hang-nut"><button class="nut chinh" type="button" id="in-bc">In / lưu PDF</button><button class="nut" type="button" id="tai-bc">Tải file report</button></div></section>' +
       '<section><h2><span class="so-muc">06</span>Góp ý</h2><p class="phu">Chỗ nào khó hiểu, chỗ nào thiếu, giao diện chưa ổn — ghi vào form khoảng 3 phút. Form tự điền sẵn buổi này.</p>' +
       '<div class="hang-nut"><a class="nut" id="gop-y-buoi" href="#" target="_blank" rel="noopener">Mở form góp ý ↗</a>' +
-      (K.buoi[b.so] ? '<a class="nut chinh" href="#/bai/' + K.buoi[b.so].bai[0].id + '">Sang Buổi ' + (b.so + 1) + (K.buoi[b.so].phan === 2 && (b.phan || 1) === 1 ? ' · thực hành trên Xưởng' : '') + ' →</a>' : '<a class="nut chinh" href="#/">Về trang khoá học →</a>') + '</div></section></div>';
+      nutBuoiSau(b) + '</div></section></div>';
 
     // ---------------- 01 · Trắc nghiệm kiểu thi online (06/11): quy chế → bắt đầu → có giờ, xáo câu + đáp án, đếm rời trang → nộp → mới hiện đáp án + điểm buổi
     var sec = $('#kt-tn', main), tongCau = b.kiem_tra.length, dongHo = 0, dangRoi = false, vuaBatDau = false, hoiLaiNop = false;
