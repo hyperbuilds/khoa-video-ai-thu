@@ -166,10 +166,33 @@
     goi('luu', { du_lieu: APP.duLieu(), tom_tat: APP.tomTat() }).then(function (kq) {
       dangGui = false;
       if (kq && kq.ok) { veChip('da-luu'); if (chuaGui) gui(); }
-      else if (!(kq && (kq.loi === 'phien' || kq.loi === 've'))) veChip('loi');
-    }).catch(function () { dangGui = false; veChip('loi'); });
+      else if (!(kq && (kq.loi === 'phien' || kq.loi === 've'))) { veChip('loi'); henThua(); }
+    }).catch(function () { dangGui = false; veChip('loi'); henThua(); });
   }
-  window.KHOA_DONG_BO = function () { clearTimeout(hen); hen = setTimeout(gui, 4000); };
+  // 09/11 16:00 (≈15 người học cùng lúc → máy chủ Apps Script quá tải, trang Quản trị báo "Không kết nối được máy chủ"):
+  // - thay đổi QUAN TRỌNG (xem hết / hoàn thành bài, câu hỏi nhanh, lượt thi + câu đang chọn, tự luận, checklist, ghi chép,
+  //   đánh giá, báo chỗ chưa ổn, góp ý chung) → gửi sau 3 giây ngừng thao tác, như cũ;
+  // - CHỈ thời gian xem / mốc video / giây trên trang (video lưu 10 giây/lần) → gom lại, tối đa ~60 giây gửi 1 lần
+  //   (lệch ngẫu nhiên để các máy không gửi dồn cùng lúc). Trước đây mọi lần lưu đều gửi sau 4 giây → ~10 giây/lần/người khi xem video.
+  // - rời tab / rời trang → gửi nốt ngay; gửi hỏng → thử lại sau 45–75 giây (không dồn dập thêm khi máy chủ đang quá tải).
+  var henLuc = 0, dauCuoi = '';
+  function dauQuanTrong() {
+    var D = APP.duLieu() || {}, o = {};
+    Object.keys(D.bai || {}).forEach(function (k) { var r = D.bai[k] || {}; o[k] = (r.xem ? 1 : 0) + '' + (r.xong ? 1 : 0); });
+    o.hnl = Object.keys(D.hnl || {}).map(function (k) { return k + ':' + ((D.hnl[k] || {}).lan || 0); }).join(',');
+    o.hn = Object.keys(D.hn || {}).length;
+    o.kt = Object.keys(D.kt || {}).map(function (k) { var x = D.kt[k] || {}; return k + ':' + (x.lan || 0) + (x.nop ? 'n' : '') + (x.dat ? 'd' : '') + (x.dang ? 'g' + Object.keys(x.dang.tra || {}).length : '') + (x.them || ''); }).join(',');
+    try { o.c = JSON.stringify([D.tl, D.ck, D.ghi, D.kiem, D.dg, D.bao, D.dg_chung, D.chung]); } catch (x) {}
+    return JSON.stringify(o);
+  }
+  function datHen(ms) { clearTimeout(hen); henLuc = Date.now() + ms; hen = setTimeout(function () { hen = 0; henLuc = 0; gui(); }, ms); }
+  function henThua() { if (!hen) datHen(45000 + Math.random() * 30000); }
+  window.KHOA_DONG_BO = function () {
+    var d = dauQuanTrong();
+    if (d !== dauCuoi) { dauCuoi = d; datHen(3000); }                 // thay đổi quan trọng: gửi khi ngừng tay 3 giây
+    else if (!hen) datHen(55000 + Math.random() * 10000);             // chỉ thời gian xem: đã có hẹn thì giữ hẹn cũ, không dời
+  };
+  document.addEventListener('visibilitychange', function () { if (document.visibilityState === 'hidden' && hen && daTai) { clearTimeout(hen); hen = 0; henLuc = 0; gui(); } });
   // rời trang: gửi nốt phần chưa gửi (không chờ trả lời)
   window.addEventListener('pagehide', function () {
     if ((!ve && !phien) || !hen || !daTai) return; clearTimeout(hen); hen = 0;
