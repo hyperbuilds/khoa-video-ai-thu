@@ -136,7 +136,8 @@
     b.kiem_tra.forEach(function (q, k) { if (dg.tra[k] === q.dap) d++; });
     var giay = Math.min(QC.kt_phut * 60, Math.round((Date.now() - dg.bd) / 1000));
     kt.lich = kt.lich || [];
-    kt.lich.push({ bd: new Date(dg.bd).toISOString(), giay: giay, dung: d, tong: tongCau, roi: +dg.roi || 0, tu_nop: tuNop || '', qua_nhanh: giay < tongCau * QC.giay_moi_cau_toi_thieu, su_kien: dg.su_kien });
+    kt.lich.push({ bd: new Date(dg.bd).toISOString(), giay: giay, dung: d, tong: tongCau, roi: +dg.roi || 0, tu_nop: tuNop || '', qua_nhanh: giay < tongCau * QC.giay_moi_cau_toi_thieu, su_kien: dg.su_kien,
+      thu_tu: dg.thu_tu, pa: dg.pa }); // giữ thứ tự câu + phương án của lượt này để trang xem lại hiện đúng như lúc làm (không lộ "toàn B")
     kt.tra = dg.tra; kt.dung = d; kt.tot = Math.max(+kt.tot || 0, d); kt.lan = (+kt.lan || 0) + 1; kt.dat = !!kt.dat || d >= can; kt.nop = true; delete kt.dang;
     luu();
     if (window.KHOA_NHIP) window.KHOA_NHIP('nop-bai');
@@ -1090,6 +1091,26 @@
 
   // ================================================================ câu hỏi nhanh — chọn hết rồi Nộp; đáp án + giải thích chỉ hiện sau khi nộp
   // D.hn[mã câu] = lựa chọn (số) hoặc chỗ bấm {x, y} (câu bấm trên ảnh); D.hnl[bài] = { lan: số lần nộp, lan1: điểm lần đầu, cuoi, xem_kq }
+  // 09/11 (user: "đáp án đúng mà không đảo đi, toàn B — cần đảo lại đáp án, thứ tự"): dữ liệu gốc để đáp án đúng ở vị trí B
+  // (câu hỏi nhanh 30/30, kiểm tra 57/58) → mọi nơi hiện phương án đều ĐẢO theo hoán vị CỐ ĐỊNH theo người học
+  // (hạt giống = email đăng nhập, chưa đăng nhập thì chuỗi ngẫu nhiên lưu trong bài làm): tải lại / đổi máy không nhảy thứ tự.
+  // Giá trị lưu vẫn là CHỈ SỐ GỐC của phương án → điểm, đáp án đã nộp, báo cáo cũ không đổi.
+  function hatGiong() {
+    var p = null; try { p = JSON.parse(localStorage.getItem('khoa-phien') || sessionStorage.getItem('khoa-phien') || 'null'); } catch (x) {}
+    if (p && p.email) return String(p.email).toLowerCase();
+    if (!D.chung.hat) D.chung.hat = Math.random().toString(36).slice(2, 10);
+    return D.chung.hat;
+  }
+  function hoanVi(khoa, n) {
+    var h = 2166136261, s = hatGiong() + '|' + khoa, a = [], i;
+    for (i = 0; i < s.length; i++) { h ^= s.charCodeAt(i); h = Math.imul(h, 16777619); }
+    for (i = 0; i < n; i++) a.push(i);
+    for (var k = n - 1; k > 0; k--) {
+      h = Math.imul(h ^ (h >>> 15), 2246822507); h = Math.imul(h ^ (h >>> 13), 3266489909); h ^= h >>> 16;
+      var r = (h >>> 0) % (k + 1), t = a[k]; a[k] = a[r]; a[r] = t;
+    }
+    return a;
+  }
   function hnDung(q, tl, ma) {
     if (q.loai !== 'bam') return tl === q.dap;
     if (tl === 1) return true; // dữ liệu cũ: đã bấm trúng
@@ -1101,15 +1122,16 @@
     var h = D.hnl[bai.id] || {}, kq = !!h.xem_kq;
     return '<section class="hoi-nhanh' + (kq ? ' da-nop' : '') + '" id="hoi-nhanh"><h2>Kiểm tra nhanh</h2>' +
       '<p class="phu">Chọn hết rồi bấm <b>Nộp</b> — đáp án và giải thích hiện sau khi nộp. Điểm lần nộp đầu tính vào điểm buổi.</p>' +
-      bai.hoi_nhanh.map(function (q, k) {
-        var ma = bai.id + '-hn' + k, da = D.hn[ma];
+      // thứ tự câu + phương án đảo theo người học; "Làm lại để ôn" (h.on) ra thứ tự mới
+      hoanVi(bai.id + '-hn|' + (+h.on || 0), bai.hoi_nhanh.length).map(function (k, vt) {
+        var q = bai.hoi_nhanh[k], ma = bai.id + '-hn' + k, da = D.hn[ma];
         if (q.loai === 'bam') {
-          return '<fieldset class="cau bam-o" data-ma="' + ma + '"><legend><small>Câu ' + (k + 1) + ' / ' + bai.hoi_nhanh.length + ' · bấm đúng chỗ trên ảnh</small>' + e(q.hoi) + '</legend>' +
+          return '<fieldset class="cau bam-o" data-ma="' + ma + '" data-k="' + k + '"><legend><small>Câu ' + (vt + 1) + ' / ' + bai.hoi_nhanh.length + ' · bấm đúng chỗ trên ảnh</small>' + e(q.hoi) + '</legend>' +
             '<div class="anh-bam" title="Bấm vào chỗ bạn sẽ bấm khi làm thật"><img src="' + anhSrc(q.anh) + '" alt="Ảnh màn hình Xưởng — bấm vào chỗ đúng" draggable="false"><i class="dung-o" hidden></i><i class="cham-chon" hidden></i></div>' +
             '<div class="phan-hoi" hidden></div></fieldset>';
         }
-        return '<fieldset class="cau" data-ma="' + ma + '"><legend><small>Câu ' + (k + 1) + ' / ' + bai.hoi_nhanh.length + '</small>' + e(q.hoi) + '</legend>' +
-          q.chon.map(function (c, j) { return '<label><input type="radio" name="' + ma + '" value="' + j + '"' + (da === j ? ' checked' : '') + '><span>' + e(c) + '</span></label>'; }).join('') +
+        return '<fieldset class="cau" data-ma="' + ma + '" data-k="' + k + '"><legend><small>Câu ' + (vt + 1) + ' / ' + bai.hoi_nhanh.length + '</small>' + e(q.hoi) + '</legend>' +
+          hoanVi(ma + '|' + (+h.on || 0), q.chon.length).map(function (j) { return '<label><input type="radio" name="' + ma + '" value="' + j + '"' + (da === j ? ' checked' : '') + '><span>' + e(q.chon[j]) + '</span></label>'; }).join('') +
           '<div class="phan-hoi" hidden></div></fieldset>';
       }).join('') +
       '<div class="hn-chan"><button type="button" class="nut chinh" data-hn="nop">Nộp câu trả lời</button><button type="button" class="nut" data-hn="lai" hidden>Làm lại để ôn</button><span class="hn-bao" aria-live="polite"></span></div></section>';
@@ -1118,6 +1140,7 @@
     var sec = $('.hoi-nhanh', goc); if (!sec) return;
     var H = D.hnl[bai.id] = D.hnl[bai.id] || {}, bao = $('.hn-bao', sec), nNop = $('[data-hn=nop]', sec), nLai = $('[data-hn=lai]', sec);
     var ds = $$('.cau', sec);
+    var cauCua = function (fs) { return bai.hoi_nhanh[+fs.getAttribute('data-k')]; }; // câu đã đảo thứ tự → lấy theo chỉ số gốc
     function khoa(on) { $$('input', sec).forEach(function (i) { i.disabled = on; }); sec.classList.toggle('da-nop', on); nNop.hidden = on; nLai.hidden = !on; }
     function veCham(fs, q, ma) { // chỗ đã bấm (chưa nói đúng sai)
       var tl = D.hn[ma], c = $('.cham-chon', fs); if (!c) return;
@@ -1125,15 +1148,15 @@
     }
     function hienKetQua() {
       var dung = 0;
-      ds.forEach(function (fs, k) {
-        var q = bai.hoi_nhanh[k], ma = fs.getAttribute('data-ma'), tl = D.hn[ma], ok = hnDung(q, tl, ma), ph = $('.phan-hoi', fs);
+      ds.forEach(function (fs) {
+        var q = cauCua(fs), ma = fs.getAttribute('data-ma'), tl = D.hn[ma], ok = hnDung(q, tl, ma), ph = $('.phan-hoi', fs);
         if (ok) dung++;
         if (q.loai === 'bam') {
           var r = rectMuc(q.anh, q.dung), o = $('.dung-o', fs);
           if (r) { o.hidden = false; o.style.cssText = 'left:' + (r.x * 100) + '%;top:' + (r.y * 100) + '%;width:' + (r.w * 100) + '%;height:' + (r.h * 100) + '%'; }
           $('.cham-chon', fs).classList.toggle('sai', !ok);
         } else {
-          $$('label', fs).forEach(function (l, i) { l.classList.toggle('dung', i === q.dap); l.classList.toggle('sai', i === tl && tl !== q.dap); });
+          $$('label', fs).forEach(function (l) { var i = +$('input', l).value; l.classList.toggle('dung', i === q.dap); l.classList.toggle('sai', i === tl && tl !== q.dap); }); // i = chỉ số gốc (phương án đã đảo)
         }
         ph.hidden = false; ph.className = 'phan-hoi ' + (ok ? 'dung' : 'sai');
         ph.innerHTML = '<b>' + (ok ? 'Đúng.' : q.loai === 'bam' ? 'Chưa đúng — chỗ đúng đã khoanh xanh.' : 'Chưa đúng — đáp án đúng tô xanh.') + '</b>' + e(ok ? q.giai : (q.giai || q.goi_y));
@@ -1142,8 +1165,8 @@
       khoa(true);
       return dung;
     }
-    ds.forEach(function (fs, k) {
-      var q = bai.hoi_nhanh[k], ma = fs.getAttribute('data-ma');
+    ds.forEach(function (fs) {
+      var q = cauCua(fs), ma = fs.getAttribute('data-ma');
       if (q.loai === 'bam') {
         var hop = $('.anh-bam', fs); veCham(fs, q, ma);
         hop.addEventListener('click', function (ev) {
@@ -1154,17 +1177,17 @@
       } else $$('input', fs).forEach(function (r) { r.addEventListener('change', function () { D.hn[ma] = +r.value; luu(); bao.textContent = ''; }); });
     });
     nNop.addEventListener('click', function () {
-      var thieu = ds.filter(function (fs, k) { var tl = D.hn[fs.getAttribute('data-ma')]; return bai.hoi_nhanh[k].loai === 'bam' ? !(tl === 1 || (tl && typeof tl === 'object')) : typeof tl !== 'number'; }).length;
+      var thieu = ds.filter(function (fs) { var tl = D.hn[fs.getAttribute('data-ma')]; return cauCua(fs).loai === 'bam' ? !(tl === 1 || (tl && typeof tl === 'object')) : typeof tl !== 'number'; }).length;
       if (thieu) { bao.textContent = 'Còn ' + thieu + ' câu chưa trả lời.'; return; }
       H.xem_kq = true; H.lan = (+H.lan || 0) + 1;
-      var dung = 0; ds.forEach(function (fs, k) { if (hnDung(bai.hoi_nhanh[k], D.hn[fs.getAttribute('data-ma')])) dung++; });
+      var dung = 0; ds.forEach(function (fs) { if (hnDung(cauCua(fs), D.hn[fs.getAttribute('data-ma')])) dung++; });
       if (!H.lan1) H.lan1 = { dung: dung, tong: ds.length, luc: new Date().toISOString() };
       H.cuoi = { dung: dung, tong: ds.length };
       luu(); hienKetQua();
       try { document.dispatchEvent(new CustomEvent('da-nop-hoi-nhanh', { detail: bai.id })); } catch (x) {}
     });
     nLai.addEventListener('click', function () {
-      H.xem_kq = false; ds.forEach(function (fs) { delete D.hn[fs.getAttribute('data-ma')]; }); luu();
+      H.xem_kq = false; H.on = (+H.on || 0) + 1; ds.forEach(function (fs) { delete D.hn[fs.getAttribute('data-ma')]; }); luu(); // làm lại → thứ tự mới
       var moi = document.createElement('div'); moi.innerHTML = veHoiNhanh(bai); sec.replaceWith(moi.firstChild); ganHoiNhanh(goc, bai);
     });
     if (H.xem_kq) hienKetQua();
@@ -1395,11 +1418,16 @@
         '<tr><td>Chuyên cần — thời gian xem video thật các bài trong buổi</td><td>' + p.hoc + ' / 20</td></tr>' +
         '<tr><td>Câu hỏi nhanh — lần nộp đầu</td><td>' + p.hn + ' / 10</td></tr></tbody></table>' +
         (p.co.length ? '<p class="kt-co">Ghi chú cho người chấm: ' + e(p.co.join(' · ')) + '.</p>' : '') + '</div>' +
-        '<div class="kt-xem-lai">' + b.kiem_tra.map(function (q, k) {
-          var tl = (kt.tra || {})[k];
-          return '<fieldset class="cau" data-k="' + k + '"><legend><small>Câu ' + (k + 1) + ' · ' + (tl === q.dap ? 'đúng' : typeof tl === 'number' ? 'sai' : 'chưa chọn') + '</small>' + e(q.hoi) + '</legend>' +
-            q.chon.map(function (c, j) { return '<label class="' + (hienDap && j === q.dap ? 'dung' : j === tl ? (tl === q.dap ? 'dung' : 'sai') : '') + '"><input type="radio" disabled' + (j === tl ? ' checked' : '') + '><span>' + e(c) + '</span></label>'; }).join('') + '</fieldset>';
-        }).join('') + '</div>' +
+        // 09/11: xem lại theo đúng thứ tự câu + phương án của lượt cuối (lượt cũ chưa lưu thứ tự → đảo cố định theo người học)
+        '<div class="kt-xem-lai">' + (function () {
+          var tt = cuoi && cuoi.thu_tu && cuoi.thu_tu.length === tongCau ? cuoi.thu_tu : hoanVi(bid + '-kt-xem', tongCau);
+          return tt.map(function (k, vt) {
+            var q = b.kiem_tra[k], tl = (kt.tra || {})[k];
+            var pa = cuoi && cuoi.pa && cuoi.pa[k] && cuoi.pa[k].length === q.chon.length ? cuoi.pa[k] : hoanVi(bid + '-kt-xem-' + k, q.chon.length);
+            return '<fieldset class="cau" data-k="' + k + '"><legend><small>Câu ' + (vt + 1) + ' · ' + (tl === q.dap ? 'đúng' : typeof tl === 'number' ? 'sai' : 'chưa chọn') + '</small>' + e(q.hoi) + '</legend>' +
+              pa.map(function (j) { return '<label class="' + (hienDap && j === q.dap ? 'dung' : j === tl ? (tl === q.dap ? 'dung' : 'sai') : '') + '"><input type="radio" disabled' + (j === tl ? ' checked' : '') + '><span>' + e(q.chon[j]) + '</span></label>'; }).join('') + '</fieldset>';
+          }).join('');
+        })() + '</div>' +
         (hienDap ? '' : '<p class="tom-tat">Đáp án đúng sẽ hiện khi bạn đạt hoặc đã dùng hết ' + luotToiDa() + ' lượt.</p>') +
         '<div class="hang-nut">' + (!kt.dat && conLuot ? '<button class="nut chinh" type="button" data-kt="lam-lai">Làm lại · lần ' + ((+kt.lan || 0) + 1) + '/' + luotToiDa() + '</button>' : '') +
         (!kt.dat && !conLuot ? '<p class="tom-tat thieu">Đã hết lượt làm bài. Báo người quản lý khoá học để được mở thêm lượt.</p>' : '') + '</div>';
