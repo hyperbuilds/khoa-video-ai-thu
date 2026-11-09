@@ -82,6 +82,7 @@
     if (!mc || !mc.daVao()) { main.innerHTML = '<div class="qt">' + APP.cho({ tieu: 'Đang đăng nhập', buoc: ['Đang kiểm tra tài khoản quản trị…'], khung: 'qt-tong' }) + '</div>'; return; }
     if (!mc.laQuanTri()) { main.innerHTML = '<div class="qt"><header class="dau-bai"><span class="nhan">Quản trị</span><h1>Không có quyền</h1></header><p class="phu">Trang này chỉ dành cho người quản lý khoá học.</p><a class="nut" href="#/">← Về khoá học</a></div>'; return; }
     document.title = 'Quản trị · ' + K.ten;
+    if (email === 'danh-gia' && window.KHOA_DANH_GIA) { clearInterval(henSong); window.KHOA_DANH_GIA.baoCao(main); return; } // 09/11: báo cáo đánh giá buổi học (danh-gia.js)
     if (email) trangNguoi(main, email); else trangTong(main);
   };
 
@@ -116,6 +117,7 @@
         '<select data-qt="bo-phan" aria-label="Lọc theo bộ phận"><option value="">Mọi bộ phận</option>' + boPhan.map(function (b) { return '<option' + (b === loc.bo_phan ? ' selected' : '') + '>' + e(b) + '</option>'; }).join('') + '</select>' +
         '<select data-qt="tt" aria-label="Lọc theo trạng thái">' + [['', 'Mọi trạng thái'], ['truc-tuyen', 'Đang mở web'], ['dang-thi', 'Đang thi'], ['im', 'Mở web mà không thao tác'], ['ngoai', 'Không mở web'], ['lau', 'Lâu chưa vào học (≥ 3 ngày)']].map(function (o) { return '<option value="' + o[0] + '"' + (o[0] === loc.tt ? ' selected' : '') + '>' + o[1] + '</option>'; }).join('') + '</select>' +
         '<label class="qt-chon"><input type="checkbox" data-qt="chu-y"' + (loc.chu_y ? ' checked' : '') + '> Chỉ người cần chú ý</label><span class="gian"></span>' +
+        (window.KHOA_DANH_GIA ? '<a class="nut chinh" href="#/quan-tri/danh-gia">Đánh giá buổi học →</a>' : '') +
         '<button class="nut" type="button" data-qt="tai">↻ Tải lại</button><button class="nut" type="button" data-qt="xuat">⬇ Xuất Excel</button>' +
         (C.sheet ? '<a class="nut" href="' + e(C.sheet) + '" target="_blank" rel="noopener">Mở Google Sheet ↗</a>' : '') + '</div>' +
       '<div class="qt-cuon"><table class="qt-bang"><thead><tr>' +
@@ -281,6 +283,7 @@
         '<span>Vào học lần đầu ' + e(ngayGio(dong['Lần đầu'])) + '</span><span>Lần cuối ' + e(ngayGio(dong['Lần cuối'])) + '</span></div><div class="qt-tt-dong" id="qt-tt-dong" aria-live="polite"></div></header>' +
       '<div class="qt-the">' + the('Tiến độ', t.tien_do + '%', 'mục đã xong ' + t.muc_xong) + the('Bài hoàn thành', t.bai_hoan_thanh, 'xem hết ' + t.bai_xem_het) +
         the('Phút xem thật', t.phut_xem, 'chỉ tính lúc video chạy, trang đang mở') + the('Điểm TB buổi', t.diem_tb === '' ? '—' : t.diem_tb, 'trên 100') + '</div>' +
+      (window.KHOA_DANH_GIA ? window.KHOA_DANH_GIA.chungCuaNguoi(D) : '') + // 09/11: góp ý chung về các buổi đào tạo
       (buoi.length ? buoi.map(function (b) { return veBuoi(b, D, email, ten); }).join('') : '<p class="phu">Học viên chưa bắt đầu buổi nào.</p>') +
       '<section class="qt-muc"><h2>Từng bài</h2><p class="phu">Mỗi lần mở bài và bấm phát được ghi thành 1 lần học riêng (học lại cũng ghi): lúc bắt đầu, thời gian xem thật, xem từ đâu tới đâu.</p><div class="qt-cuon"><table class="qt-bang nho"><thead><tr><th>Bài</th><th>Số lần học</th><th>Phút xem (tổng)</th><th>Xem tới</th><th>Xem hết</th><th>Hoàn thành</th><th>Câu hỏi nhanh</th><th>Phút trên trang</th></tr></thead><tbody>' +
         t.bai.map(function (x) {
@@ -329,6 +332,7 @@
       (b.tu_luan.length ? '<h3>Tự luận</h3>' + b.tu_luan.map(function (q, k) { return '<div class="qt-tl"><p><b>Câu ' + (k + 1) + '.</b> ' + e(q) + '</p><p class="tra">' + (tl[k] ? e(tl[k]) : '<i>Chưa viết</i>') + '</p></div>'; }).join('') : '') +
       (b.checklist && b.checklist.length ? '<h3>Checklist · ' + ck.filter(Boolean).length + '/' + b.checklist.length + '</h3><ul class="qt-ck">' + b.checklist.map(function (c, k) { return '<li class="' + (ck[k] ? 'co' : '') + '">' + (ck[k] ? '✓ ' : '○ ') + e(c) + '</li>'; }).join('') + '</ul>' : '') +
       (Object.keys(nhanGhi).some(function (k) { return (g[k] || '').trim(); }) ? '<h3>Ghi chép</h3>' + Object.keys(nhanGhi).filter(function (k) { return (g[k] || '').trim(); }).map(function (k) { return '<div class="qt-tl"><p><b>' + nhanGhi[k] + '</b></p><p class="tra">' + e(g[k]) + '</p></div>'; }).join('') : '') +
+      (window.KHOA_DANH_GIA ? window.KHOA_DANH_GIA.cuaNguoi(D, b) : '') + // 09/11: đánh giá buổi học của người này
       '</section>';
   }
 

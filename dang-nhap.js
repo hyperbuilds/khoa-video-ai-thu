@@ -193,6 +193,15 @@
     }
     c.setAttribute('data-tt', tt); c.querySelector('small').textContent = TT[tt] || '';
   }
+  function moHetBat() { try { return localStorage.getItem('khoa-mo-het') === '1'; } catch (x) { return false; } }
+  function veMoHet() {
+    var m = document.getElementById('nut-mo-het'); if (!m) return;
+    var bat = moHetBat();
+    m.setAttribute('aria-pressed', bat ? 'true' : 'false');
+    m.innerHTML = '<span aria-hidden="true">' + (bat ? '🔓' : '🔒') + '</span><span class="nut-chu">' + (bat ? 'Đang mở toàn bộ bài' : 'Mở toàn bộ bài') + '</span>';
+    m.setAttribute('aria-label', bat ? 'Đang mở toàn bộ bài — bấm để khoá lại' : 'Mở toàn bộ bài');
+    m.title = bat ? 'Mọi bài và bài kiểm tra đang mở (chỉ trên máy bạn). Bấm để khoá lại như người học.' : 'Mở mọi bài và bài kiểm tra để xem thử (chỉ trên máy bạn, người học không bị ảnh hưởng).';
+  }
   // nút Quản trị (chỉ email quản trị — máy chủ vẫn kiểm quyền ở mọi lần gọi trang quản trị)
   function datQuanTri(b) {
     var cu = quanTri; quanTri = !!b;
@@ -200,6 +209,19 @@
     var n = dau.querySelector('#nut-quan-tri');
     if (quanTri && !n) { n = document.createElement('a'); n.className = 'nut'; n.id = 'nut-quan-tri'; n.href = '#/quan-tri'; n.textContent = 'Quản trị'; dau.insertBefore(n, dau.querySelector('.tai-khoan') || dau.querySelector('#nut-gop-y')); }
     else if (!quanTri && n) n.remove();
+    // 09/11 (user: "thêm nút đóng, mở toàn bộ bài học cho admin"): bật = bỏ khoá tuần tự, bỏ chờ giữa 2 lượt thi — CHỈ trên máy này,
+    // người học không bị ảnh hưởng. ung-dung.js · moHet() chỉ nghe cờ khi tài khoản là quản trị.
+    var m = dau.querySelector('#nut-mo-het');
+    if (quanTri && !m) {
+      m = document.createElement('button'); m.type = 'button'; m.className = 'nut nut-mo-het'; m.id = 'nut-mo-het';
+      dau.insertBefore(m, n);
+      m.addEventListener('click', function () {
+        var bat = !moHetBat(); try { localStorage.setItem('khoa-mo-het', bat ? '1' : '0'); } catch (x) {}
+        veMoHet(); if (APP.veLai) APP.veLai();
+      });
+    } else if (!quanTri && m) m.remove();
+    if (m) veMoHet();
+    if (cu !== quanTri && !/^#\/quan-tri/.test(location.hash) && APP.veLai && moHetBat()) APP.veLai(); // quyền vừa xác nhận → áp cờ mở toàn bộ ngay
     // 07/11: chỉ vẽ lại trang Quản trị khi quyền THẬT SỰ đổi (trước đây mọi lần máy chủ trả lời đều vẽ lại cả trang → giật, mất hiệu ứng hiện mượt)
     if (cu !== quanTri && /^#\/quan-tri/.test(location.hash) && APP.veLai) APP.veLai();
   }
