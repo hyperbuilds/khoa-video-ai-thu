@@ -40,9 +40,9 @@
   }
 
   // ================================================================ 1. mục 05 trang kiểm tra cuối buổi
-  // ctx (ung-dung.js · trangKiemTra): { D, luu, dangThi(): đang làm trắc nghiệm?, nutSau(): HTML nút sang buổi sau, coBuoiSau, capNhat() }
+  // ctx (ung-dung.js · trangKiemTra(bid, 'dg') — trang #/danh-gia/<buổi>): { D, luu, dangThi(), nutSau(): HTML nút sang buổi sau, coBuoiSau, capNhat() }
   function mucBuoi(b) {
-    return '<section id="dg-buoi" class="dg-muc"><h2><span class="so-muc">05</span>Đánh giá buổi học</h2><div class="dg-than"></div></section>';
+    return '<section id="dg-buoi" class="dg-muc"><div class="dg-than"></div></section>'; // 09/11 chiều: trang riêng #/danh-gia/<buổi>, tiêu đề ở đầu trang
   }
   function ganBuoi(main, b, ctx) {
     var sec = $('#dg-buoi', main); if (!sec) return;

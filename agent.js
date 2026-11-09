@@ -39,7 +39,7 @@
     var p = function (n) { return Math.round(n * 100) + '%'; };
     return [
       'Đăng nhập bằng tài khoản Google công ty. Tích "Nhớ đăng nhập trên máy này" thì 30 ngày không phải đăng nhập lại; máy dùng chung thì bỏ tích.',
-      'Học tuần tự: xong bài trước (xem hết video, nộp câu hỏi nhanh, bấm Hoàn thành) mới mở bài sau; đạt bài kiểm tra cuối buổi và gửi đánh giá buổi học (khoảng 3 phút, ở cuối trang kiểm tra) mới mở buổi sau. Khoảng 7 ngày sau, web hỏi lại bạn đã dùng được gì từ buổi đó.',
+      'Học tuần tự: xong bài trước (xem hết video, nộp câu hỏi nhanh, bấm Hoàn thành) mới mở bài sau; đạt bài kiểm tra cuối buổi và gửi đánh giá buổi học (khoảng 3 phút, mục "Đánh giá buổi học" trong mục lục) mới mở buổi sau. Mỗi buổi có 3 mục riêng: Kiểm tra cuối buổi (chỉ trắc nghiệm, tính giờ), Bài tập & tự luận (không tính giờ), Đánh giá buổi học. Khoảng 7 ngày sau, web hỏi lại bạn đã dùng được gì từ buổi đó.',
       'Luật xem video: không tua tới phần chưa xem (xem lại phần đã xem thì được); tốc độ 1× hoặc tối đa ' + (QC.toc_max || 1.1) + '×; chuyển tab hoặc rời trang thì video tự dừng. Video có phụ đề và bản chép lời; chọn được chất lượng hình (2K ở bài có bản 2K).',
       'Tiến độ tự lưu theo tài khoản: đăng nhập máy khác vẫn học tiếp đúng chỗ. Mỗi lần học lại một bài được ghi thành Lần 1, Lần 2, Lần 3…',
       'Câu hỏi nhanh cuối mỗi bài: chấm và giải thích ngay; sai thì làm lại, không bị trừ điểm.',
